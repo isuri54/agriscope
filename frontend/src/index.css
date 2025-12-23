@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .input {
+    @apply border border-green-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-400;
+  }
+
+  .btn-primary {
+    @apply bg-green-500 text-white px-5 py-2 rounded-lg hover:bg-green-600 transition;
+  }
+
+  .th {
+    @apply text-left font-semibold text-green-700 py-3;
+  }
+
+  .td {
+    @apply py-3;
+  }
+}
