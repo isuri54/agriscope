@@ -1,9 +1,8 @@
-import { useState } from "react";
 import { Calendar, Trash2, Sprout, Truck, AlertTriangle, BarChart3, FileText, Warehouse } from "lucide-react";
 import { Link, useLocation } from 'react-router-dom';
 
 export default function StorageTransport() {
-  const [facilities, setFacilities] = useState([
+  const facilities = [
     {
       name: "Central Warehouse A",
       district: "Colombo",
@@ -18,16 +17,16 @@ export default function StorageTransport() {
       capacity: 3000,
       allocated: 1800,
     },
-  ]);
+  ];
 
-  const [vehicles, setVehicles] = useState([
+  const vehicles = [
     {
       id: "Truck-001",
       district: "Galle",
       capacity: 10,
       route: "Galle to Colombo",
     },
-  ]);
+  ];
 
   return (
     <div className="bg-green-50 min-h-screen p-8 space-y-10">
@@ -54,7 +53,7 @@ export default function StorageTransport() {
         </div>
 
       {/* Storage facilities */}
-      <section className="bg-white rounded-xl shadow p-6">
+      <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
         <h2 className="text-lg font-semibold flex items-center gap-2 mb-4">
           <Warehouse size={18} className="text-green-600" />
           Storage Facilities
@@ -73,21 +72,21 @@ export default function StorageTransport() {
         </div>
 
         <button className="mt-5 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">+ Add Storage Facility</button>
-      </section>
+      </div>
 
       {/* STtorage table */}
-      <section className="bg-white rounded-xl shadow p-6">
+      <div className="bg-white rounded-xl shadow p-6">
         <table className="w-full text-sm">
           <thead className="border-b text-gray-600">
             <tr className="border-b">
-              <th className="th">Facility</th>
-              <th className="th">District</th>
-              <th className="th">Type</th>
-              <th className="th">Capacity</th>
-              <th className="th">Allocated</th>
-              <th className="th">Available</th>
-              <th className="th">Utilization</th>
-              <th className="th">Actions</th>
+              <th className="py-2 text-left">Facility</th>
+              <th className="py-2 text-left">District</th>
+              <th className="py-2 text-left">Type</th>
+              <th className="py-2 text-left">Capacity</th>
+              <th className="py-2 text-left">Allocated</th>
+              <th className="py-2 text-left">Available</th>
+              <th className="py-2 text-left">Utilization</th>
+              <th className="py-2 text-left">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -95,7 +94,7 @@ export default function StorageTransport() {
               const available = f.capacity - f.allocated;
               const percent = Math.round((f.allocated / f.capacity) * 100);
               return (
-                <tr key={i} className="border-b">
+                <tr key={i} className="border-b last:border-none">
                   <td className="td">{f.name}</td>
                   <td className="td">{f.district}</td>
                   <td className="td">{f.type}</td>
@@ -121,10 +120,10 @@ export default function StorageTransport() {
             })}
           </tbody>
         </table>
-      </section>
+      </div>
 
       {/* Transport vehicles */}
-      <section className="bg-white rounded-xl shadow p-6">
+      <div className="bg-white rounded-xl shadow p-6">
         <h2 className="text-lg font-semibold flex items-center gap-2 mb-4">
           <Truck size={18} className="text-green-600" />
             Transport Vehicles
@@ -138,23 +137,23 @@ export default function StorageTransport() {
         </div>
 
         <button className="mt-5 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">+ Add Transport Vehicle</button>
-      </section>
+      </div>
 
       {/* Vehicle table */}
       <section className="bg-white rounded-xl shadow p-6">
         <table className="w-full text-sm">
           <thead className="border-b text-gray-600">
             <tr className="border-b">
-              <th className="th">Vehicle ID</th>
-              <th className="th">District</th>
-              <th className="th">Capacity</th>
-              <th className="th">Route</th>
-              <th className="th">Actions</th>
+              <th className="py-2 text-left">Vehicle ID</th>
+              <th className="py-2 text-left">District</th>
+              <th className="py-2 text-left">Capacity</th>
+              <th className="py-2 text-left">Route</th>
+              <th className="py-2 text-left">Actions</th>
             </tr>
           </thead>
           <tbody>
             {vehicles.map((v, i) => (
-              <tr key={i} className="border-b">
+              <tr key={i} className="border-b last:border-none">
                 <td className="td">{v.id}</td>
                 <td className="td">{v.district}</td>
                 <td className="td">{v.capacity} tons</td>
