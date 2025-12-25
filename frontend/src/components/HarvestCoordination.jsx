@@ -39,8 +39,8 @@ export default function HarvestCoordination() {
                 <NavItem icon={<Sprout size={16} />} label="Harvest Coordination" to="/harvest" active />
                 <NavItem icon={<Truck size={16} />} label="Storage & Transport" to="/storage" />
                 <NavItem icon={<Calendar size={16} />} label="Seasonal Calendar" to="/seasonalcalendar"/>
-                <NavItem icon={<AlertTriangle size={16} />} label="Loss Reporting" />
-                <NavItem icon={<BarChart3 size={16} />} label="Data Viewer" />
+                <NavItem icon={<AlertTriangle size={16} />} label="Loss Reporting" to="/lossreporting" />
+                <NavItem icon={<BarChart3 size={16} />} label="Data Viewer" to="/dataviewer" />
                 <NavItem icon={<FileText size={16} />} label="Report Generation" />
             </div>
         </div>

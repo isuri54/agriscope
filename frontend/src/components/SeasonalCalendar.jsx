@@ -33,8 +33,8 @@ export default function SeasonalCalendar() {
           <NavItem icon={<Sprout size={16} />} label="Harvest Coordination" to="/harvest" />
           <NavItem icon={<Truck size={16} />} label="Storage & Transport" to="/storage" />
           <NavItem icon={<Calendar size={16} />} label="Seasonal Calendar" to="/seasonalcalendar" active />
-          <NavItem icon={<AlertTriangle size={16} />} label="Loss Reporting" to="/loss-reporting" />
-          <NavItem icon={<BarChart3 size={16} />} label="Data Viewer" to="/data-viewer" />
+          <NavItem icon={<AlertTriangle size={16} />} label="Loss Reporting" to="/lossreporting" />
+          <NavItem icon={<BarChart3 size={16} />} label="Data Viewer" to="/dataviewer" />
           <NavItem icon={<FileText size={16} />} label="Report Generation" to="/report-generation" />
         </div>
       </div>
@@ -48,12 +48,7 @@ export default function SeasonalCalendar() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Input label="Date" type="date" />
-          <Input label="Event Type" as="select">
-            <option>Select type</option>
-            <option>Weather</option>
-            <option>Pest</option>
-            <option>Disease</option>
-          </Input>
+          <Select label="Event Type" options={["Weather", "Pest", "Disease", "Other"]}/>
           <Input label="District" placeholder="Affected district" />
           <Input label="Impact Level" as="select">
             <option>Select impact</option>
@@ -142,6 +137,20 @@ function Input({ label, type = "text", placeholder }) {
         placeholder={placeholder}
         className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
       />
+    </div>
+  );
+}
+
+function Select({ label, options }) {
+  return (
+    <div>
+      <label className="block text-sm font-medium mb-1">{label}</label>
+      <select className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
+        <option>Select type</option>
+        {options.map((opt) => (
+          <option key={opt}>{opt}</option>
+        ))}
+      </select>
     </div>
   );
 }

@@ -46,8 +46,8 @@ export default function StorageTransport() {
                 <NavItem icon={<Sprout size={16} />} label="Harvest Coordination" to="/harvest" />
                 <NavItem icon={<Truck size={16} />} label="Storage & Transport" to="/storage" active />
                 <NavItem icon={<Calendar size={16} />} label="Seasonal Calendar" to="/seasonalcalendar"/>
-                <NavItem icon={<AlertTriangle size={16} />} label="Loss Reporting" />
-                <NavItem icon={<BarChart3 size={16} />} label="Data Viewer" />
+                <NavItem icon={<AlertTriangle size={16} />} label="Loss Reporting" to="/lossreporting" />
+                <NavItem icon={<BarChart3 size={16} />} label="Data Viewer" to="/dataviewer"/>
                 <NavItem icon={<FileText size={16} />} label="Report Generation" />
             </div>
         </div>
@@ -62,11 +62,7 @@ export default function StorageTransport() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <Input label="Warehouse Name" placeholder="e.g., Central Warehouse A" />
           <Input label="Location" placeholder="e.g., Colombo" />
-          <select className="input">
-            <option>Select type</option>
-            <option>Cold Storage</option>
-            <option>Dry Storage</option>
-          </select>
+          <Select label="Storage Type" options={["Dry Storage", "Cold Storage"]}/>
           <Input label="Capacity" type="number" placeholder="Capacity (tons)" />
           <Input label="Allocated Extent" type="number" placeholder="Allocated (tons)" />
         </div>
@@ -198,6 +194,20 @@ function Input({ label, type = "text", placeholder }) {
         placeholder={placeholder}
         className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
       />
+    </div>
+  );
+}
+
+function Select({ label, options }) {
+  return (
+    <div>
+      <label className="block text-sm font-medium mb-1">{label}</label>
+      <select className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
+        <option>Select type</option>
+        {options.map((opt) => (
+          <option key={opt}>{opt}</option>
+        ))}
+      </select>
     </div>
   );
 }
