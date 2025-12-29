@@ -1,6 +1,6 @@
 import { Sprout, Truck, Calendar, AlertTriangle, BarChart3, FileText, TrendingUp, Eye, Sparkles } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
 
 const data = [
   { month: "Jan", rice: 4200, vegetables: 2800, fruits: 1800 },
@@ -11,6 +11,15 @@ const data = [
   { month: "Jun", rice: 5300, vegetables: 3500, fruits: 2700 },
 ];
 
+const lossData = [
+  { month: "Jan", weather: 120, pest: 80, disease: 50 },
+  { month: "Feb", weather: 90, pest: 110, disease: 60 },
+  { month: "Mar", weather: 150, pest: 95, disease: 45 },
+  { month: "Apr", weather: 200, pest: 120, disease: 70 },
+  { month: "May", weather: 180, pest: 100, disease: 55 },
+  { month: "Jun", weather: 140, pest: 85, disease: 50 },
+];
+
 export default function DataViewer() {
   return (
     <div className="bg-green-50 min-h-screen p-8 space-y-10">
@@ -18,9 +27,9 @@ export default function DataViewer() {
         {/*Logo */}
         <div className="flex items-center gap-3">
           <img
-            src="/agriscope.png"
+            src="/agri.png"
             alt="Agriscope Logo"
-            className="h-10 w-10 object-contain"
+            className="h-20 w-20 object-contain"
           />
           <span className="text-lg font-bold text-green-700">Agriscope</span>
         </div>
@@ -107,6 +116,37 @@ export default function DataViewer() {
             </LineChart>
           </ResponsiveContainer>
         </div>
+      </div>
+
+      {/* Loss analysis by cause*/}
+      <div className="bg-white rounded-xl shadow-sm p-6">
+        <h2 className="text-lg font-semibold mb-6">
+          Loss Analysis by Cause
+        </h2>
+
+        <div className="h-[360px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={lossData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="weather" name="Weather (tons)" fill="#22c55e" />
+              <Bar dataKey="pest" name="Pest (tons)" fill="#10b981" />
+              <Bar dataKey="disease" name="Disease (tons)" fill="#059669" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/*Future forecasts */}
+      <div className="bg-white rounded-xl shadow-sm p-6 flex items-center justify-between">
+        <h2 className="text-lg font-semibold">Future Forecasts</h2>
+        <button className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg flex items-center gap-2">
+          <Sparkles size={16} />
+          View Predictions
+        </button>
       </div>
     </div>
   );
