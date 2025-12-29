@@ -21,9 +21,9 @@ export default function SeasonalCalendar() {
         {/* Logo */}
         <Link to="/harvest" className="flex items-center gap-3">
           <img 
-            src="/agriscope.png"
+            src="/agri.png"
             alt="Agriscope Logo"
-            className="h-10 w-10 object-contain"
+            className="h-20 w-20 object-contain"
           />
           <span className="text-lg font-bold text-green-700">Agriscope</span>
         </Link>
