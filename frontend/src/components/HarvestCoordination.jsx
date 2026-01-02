@@ -1,4 +1,4 @@
-import { Calendar, Trash2, Sprout, Truck, AlertTriangle, BarChart3, FileText } from "lucide-react";
+import { Calendar, Trash2, Sprout, Truck, AlertTriangle, BarChart3, FileText, Sparkles } from "lucide-react";
 import { Link, useLocation } from 'react-router-dom';
 
 export default function HarvestCoordination() {
@@ -23,9 +23,9 @@ export default function HarvestCoordination() {
 
   return (
     <div className="bg-green-50 min-h-screen p-8 space-y-10">
-        <div className="flex items-center justify-between border-b pb-3 mb-6">
+        <div className="flex items-center justify-between border-b">
             {/* Logo*/}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center">
                 <img 
                     src="/agri.png"
                     alt="Agriscope Logo"
@@ -44,6 +44,15 @@ export default function HarvestCoordination() {
                 <NavItem icon={<FileText size={16} />} label="Report Generation" />
             </div>
         </div>
+
+      {/*Future forecasts */}
+      <div className="bg-white rounded-xl shadow-sm p-6 flex items-center justify-between">
+        <h2 className="text-lg font-semibold">Future Forecasts</h2>
+        <button className="bg-green-600 hover:bg-green-600 text-white px-6 py-2 rounded-lg flex items-center gap-2">
+          <Sparkles size={16} />
+          View Predictions
+        </button>
+      </div>
 
       {/* Add planting schedule */}
       <div className="bg-white rounded-xl shadow-sm p-6 mb-8">

@@ -25,9 +25,9 @@ export default function LossReporting() {
 
   return (
     <div className="bg-green-50 min-h-screen p-8 space-y-10">
-      <div className="flex items-center justify-between border-b pb-3 mb-6">
+      <div className="flex items-center justify-between border-b">
         {/* Logo */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center">
           <img
             src="/agri.png"
             alt="Agriscope Logo"
