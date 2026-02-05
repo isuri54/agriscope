@@ -1,182 +1,305 @@
-import { Calendar, Trash2, Sprout, Truck, AlertTriangle, BarChart3, FileText, Warehouse } from "lucide-react";
+import { Calendar, Trash2, Sprout, Truck, AlertTriangle, BarChart3, FileText, Warehouse, Plus, CheckCircle } from "lucide-react";
 import { Link, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 
 export default function StorageTransport() {
-  const facilities = [
-    {
-      name: "Central Warehouse A",
-      district: "Colombo",
-      type: "Cold Storage",
-      capacity: 5000,
-      allocated: 3200,
-    },
-    {
-      name: "Regional Hub B",
-      district: "Kandy",
-      type: "Dry Storage",
-      capacity: 3000,
-      allocated: 1800,
-    },
-  ];
+  const [facilities, setFacilities] = useState([]);
+  const [vehicles, setVehicles] = useState([]);
+  const [facilityForm, setFacilityForm] = useState({ name: '', district: '', type: 'Dry Storage', capacity: '' });
+  const [vehicleForm, setVehicleForm] = useState({ vehicleId: '', district: '', capacity: '', route: '' });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
-  const vehicles = [
-    {
-      id: "Truck-001",
-      district: "Galle",
-      capacity: 10,
-      route: "Galle to Colombo",
-    },
-  ];
+  const location = useLocation();
+
+  // Fetch data on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Please login first');
+        return;
+      }
+
+      try {
+        const [facRes, vehRes] = await Promise.all([
+          axios.get('http://localhost:5000/api/storage/facilities', {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          axios.get('http://localhost:5000/api/storage/vehicles', {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+        ]);
+
+        setFacilities(facRes.data);
+        setVehicles(vehRes.data);
+      } catch (err) {
+        setError('Failed to load data');
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // Handle form changes
+  const handleFacilityChange = (e) => {
+    setFacilityForm({ ...facilityForm, [e.target.name]: e.target.value });
+  };
+
+  const handleVehicleChange = (e) => {
+    setVehicleForm({ ...vehicleForm, [e.target.name]: e.target.value });
+  };
+
+  // Add facility
+  const handleAddFacility = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    const token = localStorage.getItem('token');
+    try {
+      const res = await axios.post('http://localhost:5000/api/storage/facilities', facilityForm, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setFacilities([...facilities, res.data]);
+      setFacilityForm({ name: '', district: '', type: 'Dry Storage', capacity: '', allocated: '' });
+      setSuccess('Storage facility added successfully!');
+      setTimeout(() => setSuccess(''), 4000);
+    } catch (err) {
+      setError('Failed to add facility');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Add vehicle
+  const handleAddVehicle = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    const token = localStorage.getItem('token');
+    try {
+      const res = await axios.post('http://localhost:5000/api/storage/vehicles', vehicleForm, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setVehicles([...vehicles, res.data]);
+      setVehicleForm({ vehicleId: '', district: '', capacity: '', route: '' });
+      setSuccess('Transport vehicle added successfully!');
+      setTimeout(() => setSuccess(''), 4000);
+    } catch (err) {
+      setError('Failed to add vehicle');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Delete facility
+  const handleDeleteFacility = async (id) => {
+    if (!window.confirm('Delete this facility?')) return;
+    const token = localStorage.getItem('token');
+    try {
+      await axios.delete(`http://localhost:5000/api/storage/facilities/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setFacilities(facilities.filter(f => f._id !== id));
+    } catch (err) {
+      setError('Failed to delete');
+    }
+  };
+
+  // Delete vehicle
+  const handleDeleteVehicle = async (id) => {
+    if (!window.confirm('Delete this vehicle?')) return;
+    const token = localStorage.getItem('token');
+    try {
+      await axios.delete(`http://localhost:5000/api/storage/vehicles/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setVehicles(vehicles.filter(v => v._id !== id));
+    } catch (err) {
+      setError('Failed to delete');
+    }
+  };
 
   return (
     <div className="bg-green-50 min-h-screen p-8 space-y-10">
-        <div className="flex items-center justify-between border-b">
-            {/* Logo*/}
-            <div className="flex items-center">
-                <img 
-                    src="/agri.png"
-                    alt="Agriscope Logo"
-                    className="h-20 w-20 object-contain"
-                />
-                <span className="text-lg font-bold text-green-700">Agriscope</span>
-            </div>
-
-            {/* Navigation bar*/}
-            <div className="flex items-center gap-8 text-sm font-medium">
-                <NavItem icon={<Sprout size={16} />} label="Harvest Coordination" to="/harvest" />
-                <NavItem icon={<Truck size={16} />} label="Storage & Transport" to="/storage" active />
-                <NavItem icon={<Calendar size={16} />} label="Seasonal Calendar" to="/seasonalcalendar"/>
-                <NavItem icon={<AlertTriangle size={16} />} label="Loss Reporting" to="/lossreporting" />
-                <NavItem icon={<BarChart3 size={16} />} label="Data Viewer" to="/dataviewer"/>
-                <NavItem icon={<FileText size={16} />} label="Report Generation" />
-            </div>
+      {/* Header & Navigation */}
+      <div className="flex items-center justify-between border-b pb-4">
+        <div className="flex items-center">
+          <img src="/agri.png" alt="Agriscope Logo" className="h-20 w-20 object-contain" />
+          <span className="text-lg font-bold text-green-700 ml-2">Agriscope</span>
         </div>
 
-      {/* Storage facilities */}
-      <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
+        <div className="flex items-center gap-8 text-sm font-medium">
+          <NavItem icon={<Sprout size={16} />} label="Harvest Coordination" to="/harvest" />
+          <NavItem icon={<Truck size={16} />} label="Storage & Transport" to="/storage" active />
+          <NavItem icon={<Calendar size={16} />} label="Seasonal Calendar" to="/seasonalcalendar" />
+          <NavItem icon={<AlertTriangle size={16} />} label="Loss Reporting" to="/lossreporting" />
+          <NavItem icon={<BarChart3 size={16} />} label="Data Viewer" to="/dataviewer" />
+          <NavItem icon={<FileText size={16} />} label="Report Generation" to="/reports" />
+        </div>
+      </div>
+
+      {/* Messages */}
+      {error && <p className="text-red-600 text-center font-medium bg-red-50 p-3 rounded-lg">{error}</p>}
+      {success && (
+        <div className="flex items-center justify-center gap-2 text-green-600 font-medium bg-green-50 p-3 rounded-lg animate-fade-in">
+          <CheckCircle size={20} />
+          {success}
+        </div>
+      )}
+
+      {/* Storage Facilities */}
+      <div className="bg-white rounded-xl shadow-sm p-6">
         <h2 className="text-lg font-semibold flex items-center gap-2 mb-4">
           <Warehouse size={18} className="text-green-600" />
           Storage Facilities
         </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          <Input label="Warehouse Name" placeholder="e.g., Central Warehouse A" />
-          <Input label="Location" placeholder="e.g., Colombo" />
-          <Select label="Storage Type" options={["Dry Storage", "Cold Storage"]}/>
-          <Input label="Capacity" type="number" placeholder="Capacity (tons)" />
-          <Input label="Allocated Extent" type="number" placeholder="Allocated (tons)" />
-        </div>
+        <form onSubmit={handleAddFacility} className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <Input label="Warehouse Name" name="name" value={facilityForm.name} onChange={handleFacilityChange} placeholder="e.g., Central Warehouse A" />
+          <Input label="District" name="district" value={facilityForm.district} onChange={handleFacilityChange} placeholder="e.g., Colombo" />
+          <Select label="Storage Type" name="type" value={facilityForm.type} onChange={handleFacilityChange} options={["Dry Storage", "Cold Storage"]} />
+          <Input label="Capacity (tons)" name="capacity" type="number" value={facilityForm.capacity} onChange={handleFacilityChange} placeholder="Total capacity" />
+          <Input label="Allocated Capacity (tons)" name="allocated" type="number" value={facilityForm.allocated} onChange={handleFacilityChange} placeholder="Total capacity allocated" />
 
-        <button className="mt-5 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">+ Add Storage Facility</button>
-      </div>
+          <div className="md:col-span-3">
+            <button
+              type="submit"
+              disabled={loading}
+              className="mt-2 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50"
+            >
+              <Plus size={16} />
+              Add Storage Facility
+            </button>
+          </div>
+        </form>
 
-      {/* STtorage table */}
-      <div className="bg-white rounded-xl shadow p-6">
-        <table className="w-full text-sm">
-          <thead className="border-b text-gray-600">
-            <tr className="border-b">
-              <th className="py-2 text-left">Facility</th>
-              <th className="py-2 text-left">District</th>
-              <th className="py-2 text-left">Type</th>
-              <th className="py-2 text-left">Capacity</th>
-              <th className="py-2 text-left">Allocated</th>
-              <th className="py-2 text-left">Available</th>
-              <th className="py-2 text-left">Utilization</th>
-              <th className="py-2 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {facilities.map((f, i) => {
-              const available = f.capacity - f.allocated;
-              const percent = Math.round((f.allocated / f.capacity) * 100);
-              return (
-                <tr key={i} className="border-b last:border-none">
-                  <td className="td">{f.name}</td>
-                  <td className="td">{f.district}</td>
-                  <td className="td">{f.type}</td>
-                  <td className="td">{f.capacity} tons</td>
-                  <td className="td">{f.allocated} tons</td>
-                  <td className="td">{available} tons</td>
-                  <td className="td">
-                    <div className="flex items-center gap-2">
-                      <div className="w-24 bg-green-100 rounded-full h-2">
-                        <div
-                          className="bg-green-500 h-2 rounded-full"
-                          style={{ width: `${percent}%` }}
-                        />
-                      </div>
-                      {percent}%
-                    </div>
-                  </td>
-                  <td className="td text-red-500 cursor-pointer">
-                    <Trash2 size={16} />
-                  </td>
+        {facilities.length === 0 ? (
+          <p className="text-gray-500 text-center py-8">No facilities added yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="border-b text-gray-600">
+                <tr>
+                  <th className="py-2 text-left">Facility</th>
+                  <th className="py-2 text-left">District</th>
+                  <th className="py-2 text-left">Type</th>
+                  <th className="py-2 text-left">Capacity</th>
+                  <th className="py-2 text-left">Allocated</th>
+                  <th className="py-2 text-left">Available</th>
+                  <th className="py-2 text-left">Utilization</th>
+                  <th className="py-2 text-center">Actions</th>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              </thead>
+              <tbody>
+                {facilities.map((f) => {
+                  const available = f.capacity - f.allocated;
+                  const percent = f.capacity > 0 ? Math.round((f.allocated / f.capacity) * 100) : 0;
+                  return (
+                    <tr key={f._id} className="border-b last:border-none hover:bg-gray-50">
+                      <td className="py-3">{f.name}</td>
+                      <td>{f.district}</td>
+                      <td>{f.type}</td>
+                      <td>{f.capacity} tons</td>
+                      <td>{f.allocated} tons</td>
+                      <td>{available} tons</td>
+                      <td>
+                        <div className="flex items-center gap-2">
+                          <div className="w-24 bg-green-100 rounded-full h-2">
+                            <div className={`bg-green-500 h-2 rounded-full ${percent > 90 ? 'bg-red-500' : percent > 70 ? 'bg-yellow-500' : ''}`} style={{ width: `${percent}%` }} />
+                          </div>
+                          {percent}%
+                        </div>
+                      </td>
+                      <td className="text-center">
+                        <button onClick={() => handleDeleteFacility(f._id)} className="text-red-500 hover:text-red-600">
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
-      {/* Transport vehicles */}
-      <div className="bg-white rounded-xl shadow p-6">
+      {/* Transport Vehicles */}
+      <div className="bg-white rounded-xl shadow-sm p-6">
         <h2 className="text-lg font-semibold flex items-center gap-2 mb-4">
           <Truck size={18} className="text-green-600" />
-            Transport Vehicles
+          Transport Vehicles
         </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <Input label="Vehicle ID" placeholder="e.g., Truck-001" />
-          <Input label="District Name" placeholder="e.g., Colombo" />
-          <Input label="Capacity" type="number" placeholder="Capacity (tons)" />
-          <Input label="Route" placeholder="From - To" />
-        </div>
+        <form onSubmit={handleAddVehicle} className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <Input label="Vehicle ID" name="vehicleId" value={vehicleForm.vehicleId} onChange={handleVehicleChange} placeholder="e.g., Truck-001" />
+          <Input label="District" name="district" value={vehicleForm.district} onChange={handleVehicleChange} placeholder="e.g., Colombo" />
+          <Input label="Capacity (tons)" name="capacity" type="number" value={vehicleForm.capacity} onChange={handleVehicleChange} />
+          <Input label="Route" name="route" value={vehicleForm.route} onChange={handleVehicleChange} placeholder="e.g., Galle to Colombo" />
 
-        <button className="mt-5 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">+ Add Transport Vehicle</button>
+          <div className="md:col-span-2">
+            <button
+              type="submit"
+              disabled={loading}
+              className="mt-2 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50"
+            >
+              <Plus size={16} />
+              Add Transport Vehicle
+            </button>
+          </div>
+        </form>
+
+        {vehicles.length === 0 ? (
+          <p className="text-gray-500 text-center py-8">No vehicles added yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="border-b text-gray-600">
+                <tr>
+                  <th className="py-2 text-left">Vehicle ID</th>
+                  <th className="py-2 text-left">District</th>
+                  <th className="py-2 text-left">Capacity</th>
+                  <th className="py-2 text-left">Route</th>
+                  <th className="py-2 text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {vehicles.map((v) => (
+                  <tr key={v._id} className="border-b last:border-none hover:bg-gray-50">
+                    <td className="py-3">{v.vehicleId}</td>
+                    <td>{v.district}</td>
+                    <td>{v.capacity} tons</td>
+                    <td>{v.route}</td>
+                    <td className="text-center">
+                      <button onClick={() => handleDeleteVehicle(v._id)} className="text-red-500 hover:text-red-600">
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
-
-      {/* Vehicle table */}
-      <section className="bg-white rounded-xl shadow p-6">
-        <table className="w-full text-sm">
-          <thead className="border-b text-gray-600">
-            <tr className="border-b">
-              <th className="py-2 text-left">Vehicle ID</th>
-              <th className="py-2 text-left">District</th>
-              <th className="py-2 text-left">Capacity</th>
-              <th className="py-2 text-left">Route</th>
-              <th className="py-2 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {vehicles.map((v, i) => (
-              <tr key={i} className="border-b last:border-none">
-                <td className="td">{v.id}</td>
-                <td className="td">{v.district}</td>
-                <td className="td">{v.capacity} tons</td>
-                <td className="td">{v.route}</td>
-                <td className="td text-red-500 cursor-pointer">
-                  <Trash2 size={16} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
-
     </div>
   );
 }
 
-function NavItem({ icon, label, to }) {
-  const location = useLocation();
-  const isActive = location.pathname === to;
+// NavItem & Input & Select (unchanged from your code)
+function NavItem({ icon, label, to, active }) {
   return (
     <Link
       to={to}
       className={`flex items-center gap-2 cursor-pointer pb-2 transition-colors ${
-        isActive
-          ? "text-green-600 border-b-2 border-green-600"
-          : "text-gray-600 hover:text-green-600"
+        active ? "text-green-600 border-b-2 border-green-600" : "text-gray-600 hover:text-green-600"
       }`}
     >
       {icon}
@@ -185,12 +308,15 @@ function NavItem({ icon, label, to }) {
   );
 }
 
-function Input({ label, type = "text", placeholder }) {
+function Input({ label, name, type = "text", value, onChange, placeholder }) {
   return (
     <div>
       <label className="block text-sm font-medium mb-1">{label}</label>
       <input
         type={type}
+        name={name}
+        value={value}
+        onChange={onChange}
         placeholder={placeholder}
         className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
       />
@@ -198,14 +324,18 @@ function Input({ label, type = "text", placeholder }) {
   );
 }
 
-function Select({ label, options }) {
+function Select({ label, name, value, onChange, options }) {
   return (
     <div>
       <label className="block text-sm font-medium mb-1">{label}</label>
-      <select className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
-        <option>Select type</option>
+      <select
+        name={name}
+        value={value}
+        onChange={onChange}
+        className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+      >
         {options.map((opt) => (
-          <option key={opt}>{opt}</option>
+          <option key={opt} value={opt}>{opt}</option>
         ))}
       </select>
     </div>
