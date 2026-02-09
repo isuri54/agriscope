@@ -88,4 +88,63 @@ router.get('/stats', auth, async (req, res) => {
   }
 });
 
+// @route   GET /api/loss/trends
+// @desc    Get monthly loss trends by cause (aggregated for charts)
+router.get('/trends', auth, async (req, res) => {
+  try {
+    const trends = await LossReport.aggregate([
+      {
+        $group: {
+          _id: {
+            year: { $year: "$date" },
+            month: { $month: "$date" },
+            cause: "$cause",
+          },
+          totalQuantity: { $sum: "$quantityLost" },
+        },
+      },
+      {
+        $project: {
+          month: {
+            $concat: [
+              { $toString: "$_id.year" },
+              "-",
+              {
+                $cond: [
+                  { $lt: ["$_id.month", 10] },
+                  { $concat: ["0", { $toString: "$_id.month" }] },
+                  { $toString: "$_id.month" },
+                ],
+              },
+            ],
+          },
+          cause: "$_id.cause",
+          totalQuantity: 1,
+        },
+      },
+      {
+        $sort: { month: 1 },
+      },
+    ]);
+
+    // Format for Recharts (group by month, each cause as a key)
+    const formatted = [];
+    const months = [...new Set(trends.map(t => t.month))].sort();
+
+    months.forEach((month) => {
+      const monthData = { month };
+      trends
+        .filter(t => t.month === month)
+        .forEach(t => {
+          monthData[t.cause] = t.totalQuantity;
+        });
+      formatted.push(monthData);
+    });
+
+    res.json(formatted);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 export default router;
