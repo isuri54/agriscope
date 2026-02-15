@@ -12,6 +12,12 @@ export default function HarvestCoordination() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  // states for prediction
+  const [predictedExcess, setPredictedExcess] = useState(null);
+  const [predictionLoading, setPredictionLoading] = useState(false);
+  const [predictionError, setPredictionError] = useState('');
+  const [recommendedProduction, setRecommendedProduction] = useState(null);
+
   const location = useLocation();
 
   // Fetch schedules on mount
@@ -76,6 +82,54 @@ export default function HarvestCoordination() {
     }
   };
 
+  // Real prediction from FastAPI
+  const handleViewPredictions = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setPredictionError('Please login first');
+      return;
+    }
+
+    setPredictionLoading(true);
+    setPredictionError('');
+    setPredictedExcess(null);
+    setRecommendedProduction(null);
+
+    // Use Expected Yield if entered, otherwise use average
+    let productionValue = Number(formData.expectedYield);
+    let usingDefault = false;
+
+    if (!productionValue || productionValue <= 0) {
+      productionValue = 35000; // average
+      usingDefault = true;
+    }
+
+    const payload = {
+      production: productionValue,
+      season_encoded: 1, 
+      period_encoded: 0      
+    };
+
+    try {
+      const res = await axios.post(
+        'http://localhost:8000/predict',
+        payload,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const excess = res.data.predicted_excess.toFixed(2);
+      const recommended = Number((productionValue - excess).toFixed(2));
+
+      setPredictedExcess(excess);
+      setRecommendedProduction(recommended > 0 ? recommended : 0);
+
+    } catch (err) {
+      setPredictionError(err.response?.data?.detail || 'Failed to get prediction');
+    } finally {
+      setPredictionLoading(false);
+    }
+  };
+
   return (
     <div className="bg-green-50 min-h-screen p-8 space-y-10">
       <div className="flex items-center justify-between border-b pb-4">
@@ -102,13 +156,38 @@ export default function HarvestCoordination() {
         </div>
       )}
 
-      {/*View predictions */}
-      <div className="bg-white rounded-xl shadow-sm p-6 flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Future Forecasts</h2>
-        <button className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center gap-2">
-          <Sparkles size={16} />
-          View Predictions
-        </button>
+      {/* View Predictions Section */}
+      <div className="bg-white rounded-xl shadow-sm p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Future Forecasts</h2>
+          <button
+            onClick={handleViewPredictions}
+            disabled={predictionLoading || loading}
+            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50 transition"
+          >
+            <Sparkles size={16} />
+            {predictionLoading ? 'Predicting...' : 'View Predictions'}
+          </button>
+        </div>
+
+        {predictionError && <p className="text-red-600 text-sm">{predictionError}</p>}
+
+        {predictedExcess !== null && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+            <p className="text-green-700 font-medium text-lg">
+              Tomatoes will be oversupplied by <span className="text-2xl font-bold">{predictedExcess} tons</span> in the upcoming season
+            </p>
+            <p className="text-sm text-green-600 mt-1">
+              Recommendation: Consider growing {recommendedProduction} tons or adjust storage planning.
+            </p>
+          </div>
+        )}
+
+        {predictedExcess === null && !predictionLoading && !predictionError && (
+          <p className="text-sm text-gray-500 text-center">
+            Click "View Predictions" to forecast excess harvest.
+          </p>
+        )}
       </div>
 
       {/* Add Planting Schedule Form */}
@@ -188,6 +267,7 @@ export default function HarvestCoordination() {
 
 // Reusable NavItem and Input (unchanged)
 function NavItem({ icon, label, to, active }) {
+  const location = useLocation();
   return (
     <Link
       to={to}
