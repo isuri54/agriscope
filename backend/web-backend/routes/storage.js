@@ -17,15 +17,44 @@ router.get('/facilities', auth, async (req, res) => {
 
 // Add new facility
 router.post('/facilities', auth, async (req, res) => {
-  const { name, district, type, capacity } = req.body;
+  const { name, district, type, capacity, allocated } = req.body;
   try {
     const facility = new StorageFacility({
-      name, district, type, capacity,
+      name, district, type, capacity: Number(capacity), allocated: Number(allocated) || 0,
       officer: req.officer.id,
     });
     await facility.save();
     res.status(201).json(facility);
   } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Update allocated capacity for existing facility
+router.put('/facilities/:id', auth, async (req, res) => {
+  const { allocated } = req.body;
+
+  try {
+    const facility = await StorageFacility.findById(req.params.id);
+    if (!facility) return res.status(404).json({ message: 'Facility not found' });
+    if (facility.officer.toString() !== req.officer.id) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    // ADD the new allocated value to the existing one
+    const newAllocated = facility.allocated + (Number(allocated) || 0);
+
+    // Prevent going over capacity
+    if (newAllocated > facility.capacity) {
+      return res.status(400).json({ message: 'Allocated amount would exceed capacity' });
+    }
+
+    facility.allocated = newAllocated;
+    await facility.save();
+
+    res.json(facility);
+  } catch (err) {
+    console.error('Update facility error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });
