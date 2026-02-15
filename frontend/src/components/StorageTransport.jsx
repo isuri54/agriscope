@@ -6,11 +6,14 @@ import axios from 'axios';
 export default function StorageTransport() {
   const [facilities, setFacilities] = useState([]);
   const [vehicles, setVehicles] = useState([]);
-  const [facilityForm, setFacilityForm] = useState({ name: '', district: '', type: 'Dry Storage', capacity: '' });
+  const [facilityForm, setFacilityForm] = useState({ name: '', district: '', type: 'Dry Storage', capacity: '', allocated: '' });
   const [vehicleForm, setVehicleForm] = useState({ vehicleId: '', district: '', capacity: '', route: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [nameInput, setNameInput] = useState(''); // for controlled input + search
+  const [filteredFacilities, setFilteredFacilities] = useState([]); // matching facilities
+  const [selectedFacility, setSelectedFacility] = useState(null); // if existing one selected
 
   const location = useLocation();
 
@@ -45,8 +48,34 @@ export default function StorageTransport() {
 
   // Handle form changes
   const handleFacilityChange = (e) => {
-    setFacilityForm({ ...facilityForm, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    if (name === 'name') {
+      setNameInput(value);
+
+      // Filter facilities starting with input (case-insensitive)
+      const filtered = facilities.filter(f =>
+        f.name.toLowerCase().startsWith(value.toLowerCase())
+      );
+      setFilteredFacilities(filtered);
+    } else {
+      setFacilityForm({ ...facilityForm, [name]: value });
+    }
   };
+
+  useEffect(() => {
+    if (selectedFacility) {
+      setFacilityForm({
+        name: selectedFacility.name,
+        district: selectedFacility.district,
+        type: selectedFacility.type,
+        capacity: selectedFacility.capacity,
+        allocated: '' // keep empty for new allocation
+      });
+      setNameInput(selectedFacility.name);
+      setFilteredFacilities([]); // hide dropdown after selection
+    }
+  }, [selectedFacility]);
 
   const handleVehicleChange = (e) => {
     setVehicleForm({ ...vehicleForm, [e.target.name]: e.target.value });
@@ -60,6 +89,35 @@ export default function StorageTransport() {
     setSuccess('');
 
     const token = localStorage.getItem('token');
+
+    // If existing facility selected → update only allocated
+    if (selectedFacility) {
+      try {
+        const res = await axios.put(
+          `http://localhost:5000/api/storage/facilities/${selectedFacility._id}`,
+          { allocated: Number(facilityForm.allocated) || 0 },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        // Update local state
+        setFacilities(facilities.map(f => 
+          f._id === selectedFacility._id ? res.data : f
+        ));
+
+        setSuccess(`Allocated updated for ${selectedFacility.name}!`);
+        setFacilityForm({ name: '', district: '', type: 'Dry Storage', capacity: '', allocated: '' });
+        setSelectedFacility(null);
+        setNameInput('');
+        setTimeout(() => setSuccess(''), 4000);
+      } catch (err) {
+        setError('Failed to update allocation');
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    // New facility
     try {
       const res = await axios.post('http://localhost:5000/api/storage/facilities', facilityForm, {
         headers: { Authorization: `Bearer ${token}` }
@@ -162,11 +220,73 @@ export default function StorageTransport() {
         </h2>
 
         <form onSubmit={handleAddFacility} className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <Input label="Warehouse Name" name="name" value={facilityForm.name} onChange={handleFacilityChange} placeholder="e.g., Central Warehouse A" />
-          <Input label="District" name="district" value={facilityForm.district} onChange={handleFacilityChange} placeholder="e.g., Colombo" />
-          <Select label="Storage Type" name="type" value={facilityForm.type} onChange={handleFacilityChange} options={["Dry Storage", "Cold Storage"]} />
-          <Input label="Capacity (tons)" name="capacity" type="number" value={facilityForm.capacity} onChange={handleFacilityChange} placeholder="Total capacity" />
-          <Input label="Allocated Capacity (tons)" name="allocated" type="number" value={facilityForm.allocated} onChange={handleFacilityChange} placeholder="Total capacity allocated" />
+          {/* Warehouse Name with search dropdown */}
+          <div className="relative">
+            <label className="block text-sm font-medium mb-1">Warehouse Name</label>
+            <input
+              type="text"
+              name="name"
+              value={nameInput}
+              onChange={handleFacilityChange}
+              placeholder="e.g., Warehouse A or start typing to search"
+              className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+              autoComplete="off"
+            />
+
+            {/* Dropdown - width matches input */}
+            {filteredFacilities.length > 0 && nameInput && (
+              <ul className="absolute z-10 w-full bg-white border border-gray-300 rounded-lg mt-1 max-h-60 overflow-auto shadow-lg">
+                {filteredFacilities.map((f) => (
+                  <li
+                    key={f._id}
+                    className="px-3 py-2 hover:bg-green-50 cursor-pointer text-sm"
+                    onClick={() => {
+                      setSelectedFacility(f);
+                    }}
+                  >
+                    {f.name} ({f.district})
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <Input 
+            label="District" 
+            name="district" 
+            value={facilityForm.district} 
+            onChange={handleFacilityChange} 
+            placeholder="e.g., Colombo" 
+            disabled={selectedFacility} 
+          />
+
+          <Select 
+            label="Storage Type" 
+            name="type" 
+            value={facilityForm.type} 
+            onChange={handleFacilityChange} 
+            options={["Dry Storage", "Cold Storage"]} 
+            disabled={selectedFacility}
+          />
+
+          <Input 
+            label="Capacity (tons)" 
+            name="capacity" 
+            type="number" 
+            value={facilityForm.capacity} 
+            onChange={handleFacilityChange} 
+            placeholder="Total capacity" 
+            disabled={selectedFacility}
+          />
+
+          <Input 
+            label="Allocated Capacity (tons)" 
+            name="allocated" 
+            type="number" 
+            value={facilityForm.allocated} 
+            onChange={handleFacilityChange} 
+            placeholder="Allocated amount" 
+          />
 
           <div className="md:col-span-3">
             <button
@@ -175,7 +295,7 @@ export default function StorageTransport() {
               className="mt-2 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50"
             >
               <Plus size={16} />
-              Add Storage Facility
+              {selectedFacility ? 'Update Allocation' : 'Add Storage Facility'}
             </button>
           </div>
         </form>
