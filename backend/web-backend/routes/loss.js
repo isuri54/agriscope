@@ -98,7 +98,7 @@ router.get('/trends', auth, async (req, res) => {
           _id: {
             year: { $year: "$date" },
             month: { $month: "$date" },
-            cause: "$cause",
+            type: "$type",
           },
           totalQuantity: { $sum: "$quantityLost" },
         },
@@ -118,7 +118,7 @@ router.get('/trends', auth, async (req, res) => {
               },
             ],
           },
-          cause: "$_id.cause",
+          cause: "$_id.type",
           totalQuantity: 1,
         },
       },
