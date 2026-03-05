@@ -10,7 +10,9 @@ export default function Home() {
       {/* Navbar */}
       <div className="flex items-center justify-between border-b pb-4 px-8 pt-6 bg-white">
         <div className="flex items-center">
-          <img src="/logo.png" alt="Agriscope Logo" className="h-30 w-60 object-contain" />
+          <Link to="/home">
+            <img src="/logo.png" alt="Agriscope Logo" className="h-30 w-60 object-contain" />
+          </Link>
         </div>
 
         <div className="flex items-center gap-8 text-sm font-medium">
@@ -104,7 +106,7 @@ export default function Home() {
         <FeatureCard
           icon={<BarChart3 size={28} />}
           title="Data Visualization"
-          description="Visualize production and loss trends through interactive dashboards."
+          description="Visualize past loss trends by cause through interactive dashboards."
         />
       </div>
 
