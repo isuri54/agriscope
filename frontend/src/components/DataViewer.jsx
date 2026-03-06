@@ -38,11 +38,12 @@ export default function DataViewer() {
 
   return (
     <div className="bg-green-50 min-h-screen p-8 space-y-10">
-      <div className="flex items-center justify-between border-b">
+      <div className="flex items-center justify-between border-b pb-4 px-8 pt-6 bg-white">
         {/* Logo */}
         <div className="flex items-center">
-          <img src="/agri.png" alt="Agriscope Logo" className="h-20 w-20 object-contain" />
-          <span className="text-lg font-bold text-green-700">Agriscope</span>
+          <Link to="/home">
+            <img src="/logo.png" alt="Agriscope Logo" className="h-30 w-60 object-contain" />
+          </Link>
         </div>
 
         {/* Navigation bar */}
