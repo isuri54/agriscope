@@ -1,4 +1,4 @@
-import { Calendar, Trash2, Sprout, Truck, AlertTriangle, BarChart3, FileText, Sparkles, CheckCircle } from "lucide-react";
+import { Calendar, Trash2, Sprout, Truck, AlertTriangle, BarChart3, FileText, Sparkles, CheckCircle, Pencil } from "lucide-react";
 import { Link, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -11,6 +11,7 @@ export default function HarvestCoordination() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [editingId, setEditingId] = useState(null);
 
   // states for prediction
   const [predictedExcess, setPredictedExcess] = useState(null);
@@ -53,16 +54,51 @@ export default function HarvestCoordination() {
     setSuccess('');
 
     const token = localStorage.getItem('token');
+
     try {
-      const res = await axios.post('http://localhost:5000/api/harvest/schedules', formData, {
-        headers: { Authorization: `Bearer ${token}` }
+      let res;
+
+      if (editingId) {
+        // UPDATE existing schedule
+        res = await axios.put(
+          `http://localhost:5000/api/harvest/schedules/${editingId}`,
+          formData,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        setSchedules(
+          schedules.map(s =>
+            s._id === editingId ? res.data : s
+          )
+        );
+
+        setEditingId(null);
+        setSuccess('Schedule updated successfully!');
+        setTimeout(() => setSuccess(''), 4000);
+      } else {
+        // ADD new schedule
+        res = await axios.post(
+          'http://localhost:5000/api/harvest/schedules',
+          formData,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        setSchedules([...schedules, res.data]);
+        setSuccess('Planting schedule added successfully!');
+        setTimeout(() => setSuccess(''), 4000);
+      }
+
+      setFormData({
+        crop: '',
+        district: '',
+        plantingDate: '',
+        harvestDate: '',
+        area: '',
+        expectedYield: ''
       });
-      setSchedules([...schedules, res.data]);
-      setSuccess('Planting schedule added successfully!');
-      setFormData({ crop: '', district: '', plantingDate: '', harvestDate: '', area: '', expectedYield: '' });
-      setTimeout(() => setSuccess(''), 4000);
+
     } catch (err) {
-      setError('Failed to add schedule');
+      setError('Operation failed');
     } finally {
       setLoading(false);
     }
@@ -80,6 +116,21 @@ export default function HarvestCoordination() {
     } catch (err) {
       setError('Failed to delete');
     }
+  };
+
+  const handleEdit = (schedule) => {
+    setFormData({
+      crop: schedule.crop,
+      district: schedule.district,
+      plantingDate: schedule.plantingDate.split('T')[0],
+      harvestDate: schedule.harvestDate.split('T')[0],
+      area: schedule.area,
+      expectedYield: schedule.expectedYield
+    });
+
+    setEditingId(schedule._id);
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   // Real prediction from FastAPI
@@ -212,7 +263,7 @@ export default function HarvestCoordination() {
               disabled={loading}
               className="mt-4 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50"
             >
-              + Add Schedule
+              {editingId ? "Update Schedule" : "+ Add Schedule"}
             </button>
           </div>
         </form>
@@ -247,14 +298,21 @@ export default function HarvestCoordination() {
                     <td>{new Date(s.harvestDate).toLocaleDateString()}</td>
                     <td>{s.area}</td>
                     <td>{s.expectedYield}</td>
-                    <td className="text-center">
-                      <button
-                        onClick={() => handleDelete(s._id)}
-                        className="text-red-500 hover:text-red-600"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </td>
+                    <td className="text-center flex justify-center gap-3">
+                    <button
+                      onClick={() => handleEdit(s)}
+                      className="text-blue-500 hover:text-blue-600"
+                    >
+                      <Pencil size={16} />
+                    </button>
+
+                    <button
+                      onClick={() => handleDelete(s._id)}
+                      className="text-red-500 hover:text-red-600"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </td>
                   </tr>
                 ))}
               </tbody>
