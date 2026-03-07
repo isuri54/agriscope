@@ -38,6 +38,33 @@ router.post('/schedules', auth, async (req, res) => {
   }
 });
 
+// @route   PUT /api/harvest/schedules/:id
+// @desc    Update schedule
+router.put('/schedules/:id', auth, async (req, res) => {
+  try {
+    const schedule = await PlantingSchedule.findById(req.params.id);
+
+    if (!schedule) {
+      return res.status(404).json({ message: 'Schedule not found' });
+    }
+
+    if (schedule.officer.toString() !== req.officer.id) {
+      return res.status(401).json({ message: 'Not authorized' });
+    }
+
+    const updated = await PlantingSchedule.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+
+    res.json(updated);
+
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // @route   DELETE /api/harvest/schedules/:id
 // @desc    Delete a schedule (only owner can delete)
 router.delete('/schedules/:id', auth, async (req, res) => {
