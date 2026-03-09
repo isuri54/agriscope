@@ -30,9 +30,9 @@ router.post('/facilities', auth, async (req, res) => {
   }
 });
 
-// Update allocated capacity for existing facility
+// Update facility (full update or incremental allocation)
 router.put('/facilities/:id', auth, async (req, res) => {
-  const { allocated } = req.body;
+  const { name, district, type, capacity, allocated } = req.body;
 
   try {
     const facility = await StorageFacility.findById(req.params.id);
@@ -41,17 +41,24 @@ router.put('/facilities/:id', auth, async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
-    // ADD the new allocated value to the existing one
-    const newAllocated = facility.allocated + (Number(allocated) || 0);
+    if (name !== undefined) facility.name = name;
+    if (district !== undefined) facility.district = district;
+    if (type !== undefined) facility.type = type;
+    if (capacity !== undefined) facility.capacity = Number(capacity);
 
-    // Prevent going over capacity
-    if (newAllocated > facility.capacity) {
-      return res.status(400).json({ message: 'Allocated amount would exceed capacity' });
+    if (allocated !== undefined) {
+      // ADD the new allocated value to the existing one
+      const newAllocated = facility.allocated + (Number(allocated) || 0);
+
+      // Prevent going over capacity
+      if (newAllocated > facility.capacity) {
+        return res.status(400).json({ message: 'Allocated amount would exceed capacity' });
+      }
+
+      facility.allocated = newAllocated;
     }
 
-    facility.allocated = newAllocated;
     await facility.save();
-
     res.json(facility);
   } catch (err) {
     console.error('Update facility error:', err);
@@ -59,7 +66,7 @@ router.put('/facilities/:id', auth, async (req, res) => {
   }
 });
 
-// Delete facility (only owner)
+// Delete facility
 router.delete('/facilities/:id', auth, async (req, res) => {
   try {
     const facility = await StorageFacility.findById(req.params.id);
@@ -100,7 +107,31 @@ router.post('/vehicles', auth, async (req, res) => {
   }
 });
 
-// Delete vehicle (only owner)
+// Update vehicle (full update)
+router.put('/vehicles/:id', auth, async (req, res) => {
+  const { vehicleId, district, capacity, route } = req.body;
+
+  try {
+    const vehicle = await TransportVehicle.findById(req.params.id);
+    if (!vehicle) return res.status(404).json({ message: 'Vehicle not found' });
+    if (vehicle.officer.toString() !== req.officer.id) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    if (vehicleId !== undefined) vehicle.vehicleId = vehicleId;
+    if (district !== undefined) vehicle.district = district;
+    if (capacity !== undefined) vehicle.capacity = Number(capacity);
+    if (route !== undefined) vehicle.route = route;
+
+    await vehicle.save();
+    res.json(vehicle);
+  } catch (err) {
+    console.error('Update vehicle error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Delete vehicle
 router.delete('/vehicles/:id', auth, async (req, res) => {
   try {
     const vehicle = await TransportVehicle.findById(req.params.id);
