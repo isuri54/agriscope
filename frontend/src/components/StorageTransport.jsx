@@ -1,4 +1,4 @@
-import { Calendar, Trash2, Sprout, Truck, AlertTriangle, BarChart3, FileText, Warehouse, Plus, CheckCircle } from "lucide-react";
+import { Calendar, Trash2, Pencil, Sprout, Truck, AlertTriangle, BarChart3, FileText, Warehouse, Plus, CheckCircle } from "lucide-react";
 import { Link, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -14,6 +14,8 @@ export default function StorageTransport() {
   const [nameInput, setNameInput] = useState(''); // for controlled input + search
   const [filteredFacilities, setFilteredFacilities] = useState([]); // matching facilities
   const [selectedFacility, setSelectedFacility] = useState(null); // if existing one selected
+  const [editingFacilityId, setEditingFacilityId] = useState(null);
+  const [editingVehicleId, setEditingVehicleId] = useState(null);
 
   const location = useLocation();
 
@@ -81,8 +83,8 @@ export default function StorageTransport() {
     setVehicleForm({ ...vehicleForm, [e.target.name]: e.target.value });
   };
 
-  // Add facility
-  const handleAddFacility = async (e) => {
+  // Add/Update facility
+  const handleAddOrUpdateFacility = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
@@ -90,51 +92,63 @@ export default function StorageTransport() {
 
     const token = localStorage.getItem('token');
 
-    // If existing facility selected → update only allocated
-    if (selectedFacility) {
-      try {
-        const res = await axios.put(
+    try {
+      let res;
+      if (editingFacilityId) {
+        // Full update for editing
+        res = await axios.put(
+          `http://localhost:5000/api/storage/facilities/${editingFacilityId}`,
+          facilityForm,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setFacilities(facilities.map(f => f._id === editingFacilityId ? res.data : f));
+        setSuccess('Facility updated successfully!');
+      } else if (selectedFacility) {
+        // Incremental allocation update
+        res = await axios.put(
           `http://localhost:5000/api/storage/facilities/${selectedFacility._id}`,
           { allocated: Number(facilityForm.allocated) || 0 },
           { headers: { Authorization: `Bearer ${token}` } }
         );
-
-        // Update local state
-        setFacilities(facilities.map(f => 
-          f._id === selectedFacility._id ? res.data : f
-        ));
-
+        setFacilities(facilities.map(f => f._id === selectedFacility._id ? res.data : f));
         setSuccess(`Allocated updated for ${selectedFacility.name}!`);
-        setFacilityForm({ name: '', district: '', type: 'Dry Storage', capacity: '', allocated: '' });
-        setSelectedFacility(null);
-        setNameInput('');
-        setTimeout(() => setSuccess(''), 4000);
-      } catch (err) {
-        setError('Failed to update allocation');
-      } finally {
-        setLoading(false);
+      } else {
+        // Add new facility
+        res = await axios.post('http://localhost:5000/api/storage/facilities', facilityForm, {
+          headers: { Authorization: `Bearer ${token}` } 
+        });
+        setFacilities([...facilities, res.data]);
+        setSuccess('Storage facility added successfully!');
       }
-      return;
-    }
 
-    // New facility
-    try {
-      const res = await axios.post('http://localhost:5000/api/storage/facilities', facilityForm, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setFacilities([...facilities, res.data]);
+      // Reset form
       setFacilityForm({ name: '', district: '', type: 'Dry Storage', capacity: '', allocated: '' });
-      setSuccess('Storage facility added successfully!');
+      setSelectedFacility(null);
+      setNameInput('');
+      setEditingFacilityId(null);
       setTimeout(() => setSuccess(''), 4000);
     } catch (err) {
-      setError('Failed to add facility');
+      setError('Operation failed');
     } finally {
       setLoading(false);
     }
   };
 
-  // Add vehicle
-  const handleAddVehicle = async (e) => {
+  const handleEditFacility = (facility) => {
+    setFacilityForm({
+      name: facility.name,
+      district: facility.district,
+      type: facility.type,
+      capacity: facility.capacity,
+      allocated: facility.allocated
+    });
+    setNameInput(facility.name);
+    setEditingFacilityId(facility._id);
+    setSelectedFacility(null);  // Clear search selection for full edit
+  };
+
+  // Add/Update vehicle
+  const handleAddOrUpdateVehicle = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
@@ -142,18 +156,44 @@ export default function StorageTransport() {
 
     const token = localStorage.getItem('token');
     try {
-      const res = await axios.post('http://localhost:5000/api/storage/vehicles', vehicleForm, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setVehicles([...vehicles, res.data]);
+      let res;
+      if (editingVehicleId) {
+        // Update existing vehicle
+        res = await axios.put(
+          `http://localhost:5000/api/storage/vehicles/${editingVehicleId}`,
+          vehicleForm,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setVehicles(vehicles.map(v => v._id === editingVehicleId ? res.data : v));
+        setSuccess('Vehicle updated successfully!');
+      } else {
+        // Add new vehicle
+        res = await axios.post('http://localhost:5000/api/storage/vehicles', vehicleForm, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setVehicles([...vehicles, res.data]);
+        setSuccess('Transport vehicle added successfully!');
+      }
+
+      // Reset form
       setVehicleForm({ vehicleId: '', district: '', capacity: '', route: '' });
-      setSuccess('Transport vehicle added successfully!');
+      setEditingVehicleId(null);
       setTimeout(() => setSuccess(''), 4000);
     } catch (err) {
-      setError('Failed to add vehicle');
+      setError('Operation failed');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEditVehicle = (vehicle) => {
+    setVehicleForm({
+      vehicleId: vehicle.vehicleId,
+      district: vehicle.district,
+      capacity: vehicle.capacity,
+      route: vehicle.route
+    });
+    setEditingVehicleId(vehicle._id);
   };
 
   // Delete facility
@@ -220,7 +260,7 @@ export default function StorageTransport() {
           Storage Facilities
         </h2>
 
-        <form onSubmit={handleAddFacility} className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <form onSubmit={handleAddOrUpdateFacility} className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           {/* Warehouse Name with search dropdown */}
           <div className="relative">
             <label className="block text-sm font-medium mb-1">Warehouse Name</label>
@@ -296,7 +336,7 @@ export default function StorageTransport() {
               className="mt-2 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50"
             >
               <Plus size={16} />
-              {selectedFacility ? 'Update Allocation' : 'Add Storage Facility'}
+              {editingFacilityId ? 'Update Facility' : (selectedFacility ? 'Update Allocation' : 'Add Storage Facility')}
             </button>
           </div>
         </form>
@@ -338,7 +378,13 @@ export default function StorageTransport() {
                           {percent}%
                         </div>
                       </td>
-                      <td className="text-center">
+                      <td className="text-center flex justify-center gap-3">
+                        <button
+                          onClick={() => handleEditFacility(f)}
+                          className="text-blue-500 hover:text-blue-600"
+                        >
+                          <Pencil size={16} />
+                        </button>
                         <button onClick={() => handleDeleteFacility(f._id)} className="text-red-500 hover:text-red-600">
                           <Trash2 size={16} />
                         </button>
@@ -359,7 +405,7 @@ export default function StorageTransport() {
           Transport Vehicles
         </h2>
 
-        <form onSubmit={handleAddVehicle} className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <form onSubmit={handleAddOrUpdateVehicle} className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <Input label="Vehicle ID" name="vehicleId" value={vehicleForm.vehicleId} onChange={handleVehicleChange} placeholder="e.g., Truck-001" />
           <Input label="District" name="district" value={vehicleForm.district} onChange={handleVehicleChange} placeholder="e.g., Colombo" />
           <Input label="Capacity (tons)" name="capacity" type="number" value={vehicleForm.capacity} onChange={handleVehicleChange} />
@@ -372,7 +418,7 @@ export default function StorageTransport() {
               className="mt-2 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50"
             >
               <Plus size={16} />
-              Add Transport Vehicle
+              {editingVehicleId ? 'Update Vehicle' : 'Add Transport Vehicle'}
             </button>
           </div>
         </form>
@@ -398,7 +444,13 @@ export default function StorageTransport() {
                     <td>{v.district}</td>
                     <td>{v.capacity} tons</td>
                     <td>{v.route}</td>
-                    <td className="text-center">
+                    <td className="text-center flex justify-center gap-3">
+                      <button
+                        onClick={() => handleEditVehicle(v)}
+                        className="text-blue-500 hover:text-blue-600"
+                      >
+                        <Pencil size={16} />
+                      </button>
                       <button onClick={() => handleDeleteVehicle(v._id)} className="text-red-500 hover:text-red-600">
                         <Trash2 size={16} />
                       </button>
