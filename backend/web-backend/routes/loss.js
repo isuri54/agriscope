@@ -41,6 +41,40 @@ router.post('/reports', auth, async (req, res) => {
   }
 });
 
+// @route PUT /api/loss/reports/:id
+// @desc Update an existing loss report (only owner)
+router.put('/reports/:id', auth, async (req, res) => {
+  const { date, district, crop, type, cause, quantityLost, description } = req.body;
+
+  try {
+    const report = await LossReport.findById(req.params.id);
+
+    if (!report) {
+      return res.status(404).json({ message: 'Report not found' });
+    }
+
+    // Ownership check
+    if (report.officer.toString() !== req.officer.id) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    // Update fields if provided
+    if (date) report.date = new Date(date);
+    if (district) report.district = district;
+    if (crop) report.crop = crop;
+    if (type) report.type = type;
+    if (cause) report.cause = cause;
+    if (quantityLost !== undefined) report.quantityLost = Number(quantityLost);
+    if (description !== undefined) report.description = description;
+
+    await report.save();
+    res.json(report);
+  } catch (err) {
+    console.error('Update report error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // DELETE - Remove report (only owner)
 router.delete('/reports/:id', auth, async (req, res) => {
   try {
