@@ -1,4 +1,4 @@
-import { CalendarDays, Trash2, Sprout, Truck, Calendar, AlertTriangle, BarChart3, FileText, CheckCircle } from "lucide-react";
+import { CalendarDays, Trash2, Pencil, Sprout, Truck, Calendar, AlertTriangle, BarChart3, FileText, CheckCircle } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import axios from "axios";
@@ -12,6 +12,7 @@ export default function SeasonalCalendar() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [editingId, setEditingId] = useState(null); // Track event being edited
 
   const location = useLocation();
 
@@ -37,7 +38,11 @@ export default function SeasonalCalendar() {
     fetchEvents();
   }, []);
 
-  const addEvent = async () => {
+  const handleInputChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleAddOrUpdateEvent = async () => {
     if (!selectedDate || !form.type || !form.district) {
       setError("Please select date, event type, and district");
       return;
@@ -49,30 +54,64 @@ export default function SeasonalCalendar() {
 
     const token = localStorage.getItem("token");
     try {
-      const res = await axios.post(
-        "http://localhost:5000/api/calendar/events",
-        {
-          date: selectedDate.toISOString(),
-          type: form.type,
-          district: form.district,
-          description: form.description,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      let res;
+      if (editingId) {
+        // UPDATE existing event
+        res = await axios.put(
+          `http://localhost:5000/api/calendar/events/${editingId}`,
+          {
+            date: selectedDate.toISOString(),
+            type: form.type,
+            district: form.district,
+            description: form.description,
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
 
-      setEvents([...events, res.data]);
-      setSuccess("Event added successfully!");
+        setEvents(
+          events.map((e) => (e._id === editingId ? res.data : e))
+        );
+
+        setSuccess("Event updated successfully!");
+      } else {
+        // ADD new event
+        res = await axios.post(
+          "http://localhost:5000/api/calendar/events",
+          {
+            date: selectedDate.toISOString(),
+            type: form.type,
+            district: form.district,
+            description: form.description,
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        setEvents([...events, res.data]);
+        setSuccess("Event added successfully!");
+      }
+
+      // Reset form
       setForm({ type: "", district: "", description: "" });
+      setEditingId(null);
       setSelectedDate(null);
 
       setTimeout(() => setSuccess(""), 4000);
     } catch (err) {
-      setError("Failed to add event");
+      setError(`Failed to ${editingId ? "update" : "add"} event`);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEdit = (event) => {
+    setForm({
+      type: event.type,
+      district: event.district,
+      description: event.description || "",
+    });
+    setEditingId(event._id);
+    setSelectedDate(new Date(event.date)); // Set calendar to event date
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const deleteEvent = async (id) => {
@@ -151,7 +190,7 @@ export default function SeasonalCalendar() {
         {selectedDate && (
           <div>
             <h3 className="font-semibold mb-3">
-              Add Event – {selectedDate.toDateString()}
+              {editingId ? "Edit Event" : "Add Event"} – {selectedDate.toDateString()}
             </h3>
 
             <div className="space-y-3">
@@ -177,11 +216,11 @@ export default function SeasonalCalendar() {
               />
 
               <button
-                onClick={addEvent}
+                onClick={handleAddOrUpdateEvent}
                 disabled={loading}
                 className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg disabled:opacity-50"
               >
-                {loading ? "Adding..." : "+ Add Event"}
+                {loading ? "Saving..." : (editingId ? "Update Event" : "+ Add Event")}
               </button>
             </div>
           </div>
@@ -209,12 +248,20 @@ export default function SeasonalCalendar() {
                   {event.description && <p className="text-sm text-gray-600 mt-1">{event.description}</p>}
                 </div>
 
-                <button
-                  onClick={() => deleteEvent(event._id)}
-                  className="text-red-500 hover:text-red-600"
-                >
-                  <Trash2 size={16} />
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleEdit(event)}
+                    className="text-blue-500 hover:text-blue-600"
+                  >
+                    <Pencil size={16} />
+                  </button>
+                  <button
+                    onClick={() => deleteEvent(event._id)}
+                    className="text-red-500 hover:text-red-600"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
