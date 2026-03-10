@@ -38,6 +38,37 @@ router.post('/events', auth, async (req, res) => {
   }
 });
 
+// @route PUT /api/calendar/events/:id
+// @desc Update an existing calendar event (only owner)
+router.put('/events/:id', auth, async (req, res) => {
+  const { date, type, district, description } = req.body;
+
+  try {
+    const event = await CalendarEvent.findById(req.params.id);
+
+    if (!event) {
+      return res.status(404).json({ message: 'Event not found' });
+    }
+
+    // Ownership check
+    if (event.officer.toString() !== req.officer.id) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    // Update fields if provided
+    if (date) event.date = new Date(date);
+    if (type) event.type = type;
+    if (district) event.district = district;
+    if (description !== undefined) event.description = description;
+
+    await event.save();
+    res.json(event);
+  } catch (err) {
+    console.error('Update event error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // DELETE - Remove event (only owner)
 router.delete('/events/:id', auth, async (req, res) => {
   try {
