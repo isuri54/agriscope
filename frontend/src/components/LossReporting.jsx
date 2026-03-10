@@ -1,4 +1,4 @@
-import { AlertTriangle, Trash2, Sprout, Truck, Calendar, BarChart3, FileText, CheckCircle } from "lucide-react";
+import { AlertTriangle, Trash2, Pencil, Sprout, Truck, Calendar, BarChart3, FileText, CheckCircle } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import axios from "axios";
@@ -18,6 +18,7 @@ export default function LossReporting() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [editingId, setEditingId] = useState(null); // Track report being edited
 
   const location = useLocation();
 
@@ -62,12 +63,28 @@ export default function LossReporting() {
 
     const token = localStorage.getItem("token");
     try {
-      const res = await axios.post("http://localhost:5000/api/loss/reports", form, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      let res;
+      if (editingId) {
+        // UPDATE existing report
+        res = await axios.put(
+          `http://localhost:5000/api/loss/reports/${editingId}`,
+          form,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
 
-      setReports([...reports, res.data]);
-      setSuccess("Loss report submitted successfully!");
+        setReports(reports.map(r => r._id === editingId ? res.data : r));
+        setSuccess("Loss report updated successfully!");
+      } else {
+        // ADD new report
+        res = await axios.post("http://localhost:5000/api/loss/reports", form, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        setReports([...reports, res.data]);
+        setSuccess("Loss report submitted successfully!");
+      }
+
+      // Reset form
       setForm({
         date: "",
         district: "",
@@ -77,6 +94,7 @@ export default function LossReporting() {
         quantityLost: "",
         description: "",
       });
+      setEditingId(null);
 
       // Refresh stats
       const statsRes = await axios.get("http://localhost:5000/api/loss/stats", {
@@ -90,6 +108,20 @@ export default function LossReporting() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEditReport = (report) => {
+    setForm({
+      date: report.date.split('T')[0], // Format for date input
+      district: report.district,
+      crop: report.crop,
+      type: report.type,
+      cause: report.cause,
+      quantityLost: report.quantityLost,
+      description: report.description || "",
+    });
+    setEditingId(report._id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleDeleteReport = async (id) => {
@@ -154,7 +186,7 @@ export default function LossReporting() {
       <div className="bg-white rounded-xl shadow-sm p-6">
         <h2 className="text-lg font-semibold flex items-center gap-2 mb-4">
           <AlertTriangle size={18} className="text-green-600" />
-          Report New Loss
+          {editingId ? "Edit Loss Report" : "Report New Loss"}
         </h2>
 
         <form onSubmit={handleSubmitReport} className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -175,7 +207,7 @@ export default function LossReporting() {
               disabled={loading}
               className="mt-4 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50"
             >
-              + Submit Report
+              {editingId ? "Update Report" : "+ Submit Report"}
             </button>
           </div>
         </form>
@@ -216,8 +248,17 @@ export default function LossReporting() {
                     <td>{r.cause}</td>
                     <td>{r.quantityLost} tons</td>
                     <td className="truncate max-w-xs">{r.description || '-'}</td>
-                    <td className="text-center">
-                      <button onClick={() => handleDeleteReport(r._id)} className="text-red-500 hover:text-red-600">
+                    <td className="text-center flex justify-center gap-3">
+                      <button
+                        onClick={() => handleEditReport(r)}
+                        className="text-blue-500 hover:text-blue-600"
+                      >
+                        <Pencil size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteReport(r._id)}
+                        className="text-red-500 hover:text-red-600"
+                      >
                         <Trash2 size={16} />
                       </button>
                     </td>
