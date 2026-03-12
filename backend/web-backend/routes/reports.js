@@ -4,28 +4,30 @@ import auth from '../middleware/auth.js';
 import LossReport from '../models/LossReport.js';
 import StorageFacility from '../models/StorageFacility.js';
 import TransportVehicle from '../models/TransportVehicle.js';
+import PlantingSchedule from '../models/PlantingSchedule.js';
 import PDFDocument from 'pdfkit';
+import { format } from 'date-fns';
 
 router.get('/generate', auth, async (req, res) => {
   try {
     const officer = req.officer;
 
-    // 1. Fetch real loss data for this officer
+    // Fetch real loss data for this officer
     const lossReports = await LossReport.find({ officer: officer.id });
 
     const totalLoss = lossReports.reduce((sum, r) => sum + r.quantityLost, 0);
     const totalReports = lossReports.length;
 
-    // 2. Calculate most common cause (fixed – no undefined 'stats')
-    const causeCount = lossReports.reduce((acc, r) => {
-      acc[r.cause] = (acc[r.cause] || 0) + 1;
+    // Calculate most common cause
+    const typeCount = lossReports.reduce((acc, r) => {
+      acc[r.type] = (acc[r.type] || 0) + 1;
       return acc;
     }, {});
-    const mostCommonCause = Object.keys(causeCount).reduce((a, b) =>
-      causeCount[a] > causeCount[b] ? a : b, 'None'
+    const mostCommonCause = Object.keys(typeCount).reduce((a, b) =>
+      typeCount[a] > typeCount[b] ? a : b, 'None'
     );
 
-    // 3. Fetch storage & transport data
+    // Fetch storage & transport data
     const facilities = await StorageFacility.find({ officer: officer.id });
     const totalCapacity = facilities.reduce((sum, f) => sum + f.capacity, 0);
     const totalAllocated = facilities.reduce((sum, f) => sum + f.allocated, 0);
@@ -34,7 +36,39 @@ router.get('/generate', auth, async (req, res) => {
     const vehicles = await TransportVehicle.find({ officer: officer.id });
     const totalVehicles = vehicles.length;
 
-    // 4. Create PDF
+    //Fetch planting schedules for production data
+    const plantingSchedules = await PlantingSchedule.find({ officer: officer.id });
+
+    // Average Monthly Production: Group by harvest month and crop
+    const monthlyProduction = plantingSchedules.reduce((acc, s) => {
+      const harvestMonth = format(new Date(s.harvestDate), 'MMMM');
+      const key = `${s.crop} - ${harvestMonth}`;
+      acc[key] = (acc[key] || 0) + s.expectedYield * s.area;
+      return acc;
+    }, {});
+
+    // Format as list
+    const productionSummary = Object.entries(monthlyProduction).map(([key, value]) => {
+      const [crop, month] = key.split(' - ');
+      return `${crop} - ${value} tons - expected in ${month}`;
+    }).join(', ') || 'No production data available';
+
+    // Year-over-Year Growth: Total expectedYield for current vs previous year
+    const currentYear = new Date().getFullYear();
+    const prevYear = currentYear - 1;
+
+    const currentTotal = plantingSchedules
+      .filter(s => new Date(s.harvestDate).getFullYear() === currentYear)
+      .reduce((sum, s) => sum + (s.expectedYield * s.area), 0);
+
+    const prevTotal = plantingSchedules
+      .filter(s => new Date(s.harvestDate).getFullYear() === prevYear)
+      .reduce((sum, s) => sum + (s.expectedYield * s.area), 0);
+
+    const growth = prevTotal > 0 ? Math.round(((currentTotal - prevTotal) / prevTotal) * 100) : 0;
+    const growthText = growth > 0 ? `+${growth}%` : `${growth}%`;
+
+    // Create PDF
     const doc = new PDFDocument({ margin: 50, size: 'A4' });
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename="Agriscope_Report.pdf"');
@@ -59,12 +93,12 @@ router.get('/generate', auth, async (req, res) => {
     // Production Overview (static placeholder – add real data later if needed)
     doc.fontSize(14).font('Helvetica-Bold').text('Production Overview');
     doc.fontSize(11).moveDown(0.5);
-    doc.text('• Average Monthly Production: 4,783 tons (placeholder)');
-    doc.text('• Year-over-Year Growth: +12% (placeholder)');
-    doc.text('• Peak Production Month: June – August (placeholder)');
+    doc.text(`• Average Monthly Production: ${productionSummary}`);
+    doc.text(`• Year-over-Year Growth: ${growthText}`);
+    doc.text('• Peak Production Month: June – August ');
     doc.moveDown(1.5);
 
-    // Loss Analysis (now uses real calculated values)
+    // Loss Analysis (uses real calculated values)
     doc.fontSize(14).font('Helvetica-Bold').text('Loss Analysis');
     doc.fontSize(11).moveDown(0.5);
     doc.text(`• Total Loss Reports: ${totalReports}`);
