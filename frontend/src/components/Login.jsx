@@ -25,7 +25,7 @@ export default function Login() {
       localStorage.setItem("officerId", response.data.user.id);
 
       // Go to harvest page
-      navigate("/harvest");
+      navigate("/home");
     } catch (err) {
       setError("Invalid username or password");
     }
