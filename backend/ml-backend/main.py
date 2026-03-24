@@ -16,13 +16,13 @@ app.add_middleware(
 
 # Load model WITHOUT compiling legacy metrics/loss
 model = tf.keras.models.load_model(
-    "best_tomato_ann_srilanka_2025.h5",
+    "best_tomato_ann_srilanka_2025_final.h5",
     compile=False
 )
 
 # Scaler from notebook
-scaler_mean = np.array([37935.6565, 0.5, 0.17391304])
-scaler_scale = np.array([9472.59833, 0.5, 0.379034691])
+scaler_mean = np.array([36219.1533, 0.46666667, 0.13333333])
+scaler_scale = np.array([9715.88681, 0.498887652, 0.339934634])
 
 class PredictInput(BaseModel):
     production: float
