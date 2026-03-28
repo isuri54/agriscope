@@ -19,15 +19,18 @@ export default function ReportGeneration() {
       return;
     }
 
-    try {
-      const response = await axios.get("http://localhost:5000/api/report/generate", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        responseType: "blob", // downloading PDF
-      });
+    const latestExcess = localStorage.getItem('latestPredictedExcess') || null;
 
-      // Create blob URL and trigger download
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/api/report/generate",
+        { predictedExcess: latestExcess },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          responseType: "blob",
+        }
+      );
+
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = url;
@@ -37,9 +40,15 @@ export default function ReportGeneration() {
       link.remove();
       window.URL.revokeObjectURL(url);
 
-      setLoading(false);
     } catch (err) {
-      setError("Failed to generate report. Please try again.");
+      console.error("=== REPORT ERROR ===");
+      console.error("Status:", err.response?.status);
+      console.error("Error Data:", err.response?.data);
+      console.error("Full Error:", err);
+
+      const errorMessage = err.response?.data?.message || err.message || "Failed to generate report";
+      setError(errorMessage);
+    } finally {
       setLoading(false);
     }
   };
