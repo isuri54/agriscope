@@ -8,9 +8,10 @@ import PlantingSchedule from '../models/PlantingSchedule.js';
 import PDFDocument from 'pdfkit';
 import { format } from 'date-fns';
 
-router.get('/generate', auth, async (req, res) => {
+router.post('/generate', auth, async (req, res) => {
   try {
     const officer = req.officer;
+    const { predictedExcess = null } = req.body;
 
     // Fetch real loss data for this officer
     const lossReports = await LossReport.find({ officer: officer.id });
@@ -95,6 +96,7 @@ router.get('/generate', auth, async (req, res) => {
     doc.fontSize(11).moveDown(0.5);
     doc.text(`• Average Monthly Production: ${productionSummary}`);
     doc.text(`• Year-over-Year Growth: ${growthText}`);
+    doc.text(`• Latest Forecasted Excess: ${predictedExcess ? predictedExcess + ' tons' : 'No recent prediction available'}`);
     doc.text('• Peak Production Month: June – August ');
     doc.moveDown(1.5);
 
