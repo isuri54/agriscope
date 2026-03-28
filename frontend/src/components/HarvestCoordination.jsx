@@ -174,11 +174,14 @@ export default function HarvestCoordination() {
       setPredictedExcess(excess);
       setRecommendedProduction(recommended > 0 ? recommended : 0);
 
+      localStorage.setItem('latestPredictedExcess', excess);
+
     } catch (err) {
       setPredictionError(err.response?.data?.detail || 'Failed to get prediction');
     } finally {
       setPredictionLoading(false);
     }
+    
   };
 
   return (
