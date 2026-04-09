@@ -1,5 +1,5 @@
-import { CalendarDays, Trash2, Pencil, Sprout, Truck, Calendar, AlertTriangle, BarChart3, FileText, CheckCircle } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { CalendarDays, Trash2, Pencil, CheckCircle } from "lucide-react";
+import Navbar from "../navbar/Navbar";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import ReactCalendar from "react-calendar";
@@ -13,8 +13,6 @@ export default function SeasonalCalendar() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [editingId, setEditingId] = useState(null); // Track event being edited
-
-  const location = useLocation();
 
   // Fetch events on mount
   useEffect(() => {
@@ -37,10 +35,6 @@ export default function SeasonalCalendar() {
 
     fetchEvents();
   }, []);
-
-  const handleInputChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
 
   const handleAddOrUpdateEvent = async () => {
     if (!selectedDate || !form.type || !form.district) {
@@ -142,22 +136,7 @@ export default function SeasonalCalendar() {
   return (
     <div className="bg-green-50 min-h-screen p-8 space-y-10">
       {/* Header & Navigation */}
-      <div className="flex items-center justify-between border-b pb-4 px-8 pt-6 bg-white">
-        <div className="flex items-center">
-          <Link to="/home">
-            <img src="/logo.png" alt="Agriscope Logo" className="h-30 w-60 object-contain" />
-          </Link>
-        </div>
-
-        <div className="flex items-center gap-8 text-sm font-medium">
-          <NavItem icon={<Sprout size={16} />} label="Harvest Coordination" to="/harvest" />
-          <NavItem icon={<Truck size={16} />} label="Storage & Transport" to="/storage" />
-          <NavItem icon={<Calendar size={16} />} label="Seasonal Calendar" to="/seasonalcalendar" active />
-          <NavItem icon={<AlertTriangle size={16} />} label="Loss Reporting" to="/lossreporting" />
-          <NavItem icon={<BarChart3 size={16} />} label="Data Viewer" to="/dataviewer" />
-          <NavItem icon={<FileText size={16} />} label="Report Generation" to="/reports" />
-        </div>
-      </div>
+      <Navbar />
 
       {/* Messages */}
       {error && <p className="text-red-600 text-center font-medium bg-red-50 p-3 rounded-lg">{error}</p>}
@@ -268,22 +247,6 @@ export default function SeasonalCalendar() {
         )}
       </div>
     </div>
-  );
-}
-
-/* Reusable Components (unchanged) */
-function NavItem({ icon, label, to, active }) {
-  const location = useLocation();
-  return (
-    <Link
-      to={to}
-      className={`flex items-center gap-2 pb-2 transition-colors ${
-        active ? "text-green-600 border-b-2 border-green-600" : "text-gray-600 hover:text-green-600"
-      }`}
-    >
-      {icon}
-      <span>{label}</span>
-    </Link>
   );
 }
 

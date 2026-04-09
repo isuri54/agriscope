@@ -1,5 +1,4 @@
-import { Sprout, Truck, Calendar, AlertTriangle, BarChart3, FileText, TrendingUp, Eye, Sparkles } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import Navbar from "../navbar/Navbar";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
@@ -8,8 +7,6 @@ export default function DataViewer() {
   const [trends, setTrends] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  const location = useLocation();
 
   useEffect(() => {
     const fetchTrends = async () => {
@@ -38,24 +35,7 @@ export default function DataViewer() {
 
   return (
     <div className="bg-green-50 min-h-screen p-8 space-y-10">
-      <div className="flex items-center justify-between border-b pb-4 px-8 pt-6 bg-white">
-        {/* Logo */}
-        <div className="flex items-center">
-          <Link to="/home">
-            <img src="/logo.png" alt="Agriscope Logo" className="h-30 w-60 object-contain" />
-          </Link>
-        </div>
-
-        {/* Navigation bar */}
-        <div className="flex items-center gap-8 text-sm font-medium">
-          <NavItem icon={<Sprout size={16} />} label="Harvest Coordination" to="/harvest" />
-          <NavItem icon={<Truck size={16} />} label="Storage & Transport" to="/storage" />
-          <NavItem icon={<Calendar size={16} />} label="Seasonal Calendar" to="/seasonalcalendar" />
-          <NavItem icon={<AlertTriangle size={16} />} label="Loss Reporting" to="/lossreporting" />
-          <NavItem icon={<BarChart3 size={16} />} label="Data Viewer" to="/dataviewer" active />
-          <NavItem icon={<FileText size={16} />} label="Report Generation" to="/reports" />
-        </div>
-      </div>
+      <Navbar />
       
 
       {/* Loss Trends Chart */}
@@ -113,33 +93,3 @@ export default function DataViewer() {
   );
 }
 
-/* Reusable NavItem and StatCard (unchanged from your code) */
-function NavItem({ icon, label, to, active }) {
-  const location = useLocation();
-  return (
-    <Link
-      to={to}
-      className={`flex items-center gap-2 pb-2 transition-colors ${
-        active ? "text-green-600 border-b-2 border-green-600" : "text-gray-600 hover:text-green-600"
-      }`}
-    >
-      {icon}
-      <span>{label}</span>
-    </Link>
-  );
-}
-
-function StatCard({ title, value, sub, icon, positive, negative }) {
-  return (
-    <div className="bg-white rounded-xl shadow-sm p-6 flex justify-between items-center">
-      <div>
-        <p className="text-sm text-gray-500">{title}</p>
-        <p className="text-2xl font-semibold text-gray-800">{value}</p>
-        <p className={`text-sm mt-1 ${positive ? "text-green-600" : negative ? "text-red-500" : "text-gray-500"}`}>
-          {sub}
-        </p>
-      </div>
-      <div className="text-green-200">{icon}</div>
-    </div>
-  );
-}

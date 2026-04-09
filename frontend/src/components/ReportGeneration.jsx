@@ -1,12 +1,11 @@
-import { Sprout, Truck, Calendar, AlertTriangle, BarChart3, FileText, Download } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Download, FileText } from "lucide-react";
+import Navbar from "../navbar/Navbar";
 import { useState } from "react";
 import axios from "axios";
 
 export default function ReportGeneration() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const location = useLocation();
 
   const handleGenerateReport = async () => {
     setLoading(true);
@@ -56,22 +55,7 @@ export default function ReportGeneration() {
   return (
     <div className="bg-green-50 min-h-screen p-8 space-y-10">
       {/* Navbar */}
-      <div className="flex items-center justify-between border-b pb-4 px-8 pt-6 bg-white">
-        <div className="flex items-center">
-          <Link to="/home">
-            <img src="/logo.png" alt="Agriscope Logo" className="h-30 w-60 object-contain" />
-          </Link>
-        </div>
-
-        <div className="flex items-center gap-8 text-sm font-medium">
-          <NavItem icon={<Sprout size={16} />} label="Harvest Coordination" to="/harvest" />
-          <NavItem icon={<Truck size={16} />} label="Storage & Transport" to="/storage" />
-          <NavItem icon={<Calendar size={16} />} label="Seasonal Calendar" to="/seasonalcalendar" />
-          <NavItem icon={<AlertTriangle size={16} />} label="Loss Reporting" to="/lossreporting" />
-          <NavItem icon={<BarChart3 size={16} />} label="Data Viewer" to="/dataviewer" />
-          <NavItem icon={<FileText size={16} />} label="Report Generation" to="/reports" active />
-        </div>
-      </div>
+      <Navbar />
 
       {/* Generate Report Card */}
       <div className="bg-white rounded-xl shadow-sm p-6 flex items-center justify-between">
@@ -143,22 +127,6 @@ export default function ReportGeneration() {
         />
       </div>
     </div>
-  );
-}
-
-/* Reusable NavItem & Section (unchanged) */
-function NavItem({ icon, label, to, active }) {
-  const location = useLocation();
-  return (
-    <Link
-      to={to}
-      className={`flex items-center gap-2 pb-2 transition-colors ${
-        active ? "text-green-600 border-b-2 border-green-600" : "text-gray-600 hover:text-green-600"
-      }`}
-    >
-      {icon}
-      <span>{label}</span>
-    </Link>
   );
 }
 

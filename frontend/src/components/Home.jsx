@@ -1,29 +1,13 @@
-import { Sprout, Truck, Calendar, AlertTriangle, BarChart3, FileText, Sparkles, CheckCircle } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Sprout, Truck, Calendar, AlertTriangle, BarChart3, Sparkles } from "lucide-react";
+import { Link } from "react-router-dom";
+import Navbar from "../navbar/Navbar";
 
 export default function Home() {
-  const location = useLocation();
 
   return (
     <div className="bg-green-50 min-h-screen">
 
-      {/* Navbar */}
-      <div className="flex items-center justify-between border-b pb-4 px-8 pt-6 bg-white">
-        <div className="flex items-center">
-          <Link to="/home">
-            <img src="/logo.png" alt="Agriscope Logo" className="h-30 w-60 object-contain" />
-          </Link>
-        </div>
-
-        <div className="flex items-center gap-8 text-sm font-medium">
-          <NavItem icon={<Sprout size={16} />} label="Harvest Coordination" to="/harvest" />
-          <NavItem icon={<Truck size={16} />} label="Storage & Transport" to="/storage" />
-          <NavItem icon={<Calendar size={16} />} label="Seasonal Calendar" to="/seasonalcalendar" />
-          <NavItem icon={<AlertTriangle size={16} />} label="Loss Reporting" to="/lossreporting" />
-          <NavItem icon={<BarChart3 size={16} />} label="Data Viewer" to="/dataviewer" />
-          <NavItem icon={<FileText size={16} />} label="Report Generation" to="/reports" />
-        </div>
-      </div>
+      <Navbar />
 
       {/* Hero Section */}
       <div className="relative h-[600px] flex items-center justify-center text-center text-white"
@@ -132,25 +116,6 @@ export default function Home() {
 }
 
 /* Reusable Components */
-
-function NavItem({ icon, label, to }) {
-  const location = useLocation();
-  const active = location.pathname === to;
-
-  return (
-    <Link
-      to={to}
-      className={`flex items-center gap-2 cursor-pointer pb-2 transition-colors ${
-        active
-          ? "text-green-600 border-b-2 border-green-600"
-          : "text-gray-600 hover:text-green-600"
-      }`}
-    >
-      {icon}
-      <span>{label}</span>
-    </Link>
-  );
-}
 
 function FeatureCard({ icon, title, description }) {
   return (
