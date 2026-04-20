@@ -18,7 +18,7 @@ export default function HarvestCoordination() {
   const [predictionLoading, setPredictionLoading] = useState(false);
   const [predictionError, setPredictionError] = useState('');
   const [recommendedProduction, setRecommendedProduction] = useState(null);
-
+  const [forecastDetails, setForecastDetails] = useState(null);
 
   // Fetch schedules on mount
   useEffect(() => {
@@ -145,18 +145,10 @@ export default function HarvestCoordination() {
     setPredictedExcess(null);
     setRecommendedProduction(null);
 
-    // Use Expected Yield if entered, otherwise use average
-    let productionValue = Number(formData.expectedYield);
-
-    if (!productionValue || productionValue <= 0) {
-      productionValue = 35000; // average
-    }
-
-    const payload = {
-      production: productionValue,
-      season_encoded: 1, 
-      period_encoded: 0      
-    };
+    // If the user has typed a yield in the form, use it. 
+    // Otherwise, send an empty payload and let the backend use its averages.
+    const productionValue = Number(formData.expectedYield);
+    const payload = productionValue > 0 ? { production: productionValue } : {};
 
     try {
       const res = await axios.post(
@@ -165,20 +157,23 @@ export default function HarvestCoordination() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      const excess = res.data.predicted_excess.toFixed(2);
-      const recommended = Number((productionValue - excess).toFixed(2));
+      const excess = res.data.predicted_excess;
+      
+      // Calculate recommendation based on what was actually used by the backend
+      const usedProduction = res.data.forecast_context.production_used;
+      const recommended = Number((usedProduction - excess).toFixed(2));
 
       setPredictedExcess(excess);
       setRecommendedProduction(recommended > 0 ? recommended : 0);
-
-      localStorage.setItem('latestPredictedExcess', excess);
+      
+      // Optional: Store the context to show which season was predicted
+      setForecastDetails(res.data.forecast_context); 
 
     } catch (err) {
       setPredictionError(err.response?.data?.detail || 'Failed to get prediction');
     } finally {
       setPredictionLoading(false);
     }
-    
   };
 
   return (
@@ -211,12 +206,17 @@ export default function HarvestCoordination() {
 
         {predictedExcess !== null && (
           <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+            <div className="inline-block px-3 py-1 rounded-full bg-green-100 text-green-800 text-xs font-bold uppercase tracking-wider mb-2">
+              Forecast for {forecastDetails.season} {forecastDetails.year}
+            </div>
             <p className="text-green-700 font-medium text-lg">
-              Tomatoes will be oversupplied by <span className="text-2xl font-bold">{predictedExcess} tons</span> in the upcoming season
+              Tomatoes will be oversupplied by <span className="text-2xl font-bold">{predictedExcess} tons</span>
             </p>
-            <p className="text-sm text-green-600 mt-1">
-              Recommendation: Consider growing {recommendedProduction} tons or adjust storage planning.
-            </p>
+            <div className="mt-4 p-3 bg-white rounded-md border border-green-100 inline-block">
+              <p className="text-sm text-gray-700">
+                <span className="font-semibold text-green-700">Action Plan:</span> Aim for a total production of <strong>{recommendedProduction} tons</strong> to stabilize the market.
+              </p>
+            </div>
           </div>
         )}
 
