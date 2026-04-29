@@ -93,7 +93,7 @@ export default function HarvestCoordination() {
         plantingDate: '',
         harvestDate: '',
         area: '',
-        expectedYield: ''
+        expectedHarvest: ''
       });
 
     } catch (err) {
@@ -124,7 +124,7 @@ export default function HarvestCoordination() {
       plantingDate: schedule.plantingDate.split('T')[0],
       harvestDate: schedule.harvestDate.split('T')[0],
       area: schedule.area,
-      expectedYield: schedule.expectedYield
+      expectedHarvest: schedule.expectedHarvest
     });
 
     setEditingId(schedule._id);
@@ -166,7 +166,7 @@ export default function HarvestCoordination() {
       setPredictedExcess(excess);
       setRecommendedProduction(recommended > 0 ? recommended : 0);
       
-      // Optional: Store the context to show which season was predicted
+      // Store the context to show which season was predicted
       setForecastDetails(res.data.forecast_context); 
 
     } catch (err) {
@@ -240,7 +240,7 @@ export default function HarvestCoordination() {
           <Input label="Planting Date" name="plantingDate" type="date" value={formData.plantingDate} onChange={handleInputChange} />
           <Input label="Harvest Date" name="harvestDate" type="date" value={formData.harvestDate} onChange={handleInputChange} />
           <Input label="Area (hectares)" name="area" type="number" value={formData.area} onChange={handleInputChange} />
-          <Input label="Expected Yield (tons)" name="expectedYield" type="number" value={formData.expectedYield} onChange={handleInputChange} />
+          <Input label="Expected Harvest (tons)" name="expectedHarvest" type="number" value={formData.expectedHarvest} onChange={handleInputChange} />
 
           <div className="md:col-span-3">
             <button
@@ -270,7 +270,7 @@ export default function HarvestCoordination() {
                   <th className="py-2 text-left">Planting Date</th>
                   <th className="py-2 text-left">Harvest Date</th>
                   <th className="py-2 text-left">Area (ha)</th>
-                  <th className="py-2 text-left">Expected Yield (tons)</th>
+                  <th className="py-2 text-left">Expected Harvest (tons)</th>
                   <th className="py-2 text-center">Actions</th>
                 </tr>
               </thead>
@@ -282,7 +282,7 @@ export default function HarvestCoordination() {
                     <td>{new Date(s.plantingDate).toLocaleDateString()}</td>
                     <td>{new Date(s.harvestDate).toLocaleDateString()}</td>
                     <td>{s.area}</td>
-                    <td>{s.expectedYield}</td>
+                    <td>{s.expectedHarvest}</td>
                     <td className="text-center flex justify-center gap-3">
                     <button
                       onClick={() => handleEdit(s)}
