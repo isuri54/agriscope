@@ -24,7 +24,7 @@ const plantingScheduleSchema = new mongoose.Schema({
     required: true,
     min: 0,
   },
-  expectedYield: {
+  expectedHarvest: {
     type: Number,
     required: true,
     min: 0,
