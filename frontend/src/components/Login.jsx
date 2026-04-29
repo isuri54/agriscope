@@ -41,7 +41,7 @@ export default function Login() {
 
       <div className="relative bg-white rounded-xl shadow-lg w-full max-w-md p-8 z-10">
         <div className="flex flex-col items-center mb-6">
-          <img src="/agri.png" alt="Agriscope Logo" className="h-20 w-20 object-contain mb-2" />
+          <img src="/logo.png" alt="Agriscope Logo" className="h-20 w-20 object-contain mb-2" />
           <h1 className="text-2xl font-bold text-green-700">Agriscope</h1>
           <p className="text-sm text-gray-500">Agriculture Officer Login</p>
         </div>
