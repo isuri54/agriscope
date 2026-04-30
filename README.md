@@ -2,7 +2,7 @@
 
 **A web-based decision support system for agriculture officers to predict and manage tomato oversupply in Sri Lanka.**
 
-## 📋 Project Overview
+## Project Overview
 
 Agriscope is an intelligent web application developed to help agriculture officers at the Department of Agriculture forecast **excess tomato harvest** and coordinate planting, storage, transport, and loss management more effectively.
 
@@ -57,27 +57,26 @@ The system combines:
 - Git
 
 ### 1. Clone the Repository
-git clone https://github.com/isuri54/agriscope.git
-cd agriscope
+- git clone https://github.com/isuri54/agriscope.git
+- cd agriscope
 ### 2. Backend Setup (web-backend)
-cd backend/web-backend
-npm install
-cp .env.example .env
-# Configure MONGO_URI and JWT_SECRET in .env
-npm start
-Access the backend at: http://localhost:5000
+- cd backend/web-backend
+- npm install
+- cp .env.example .env
+- Configure MONGO_URI and JWT_SECRET in .env
+- npm start
+- Access the backend at: http://localhost:5000
 ### 3. ML Backend Setup (ml-backend)
-cd backend/ml-backend
-python -m venv venv
-.\venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn main:app --reload --port 8000
+- cd backend/ml-backend
+- python -m venv venv
+- .\venv\Scripts\activate
+- pip install -r requirements.txt
+- uvicorn main:app --reload --port 8000
 ### 4. Frontend Setup
-cd frontend
-npm install
-npm start
-
-Access the application at: http://localhost:3000
+- cd frontend
+- npm install
+- npm start
+- Access the application at: http://localhost:3000
 Default Login:
 
 Username: officer1
@@ -94,24 +93,32 @@ agriscope/
 
 ## Model Performance
 
-Mean Absolute Error (MAE): 521.6 tons
-Root Mean Squared Error (RMSE): 646.21 tons
-R² Score: 0.8598
-Accuracy (100 - MAPE): 88.48%
+- Mean Absolute Error (MAE): 521.6 tons
+- Root Mean Squared Error (RMSE): 646.21 tons
+- R² Score: 0.8598
+- Accuracy (100 - MAPE): 88.48%
 
 
 ## Testing
 
-Frontend: Jest + React Testing Library
-Backend: Jest + Supertest
-ML Service: pytest
-Integration & Manual Testing
+- Frontend: Jest + React Testing Library
+- Backend: Jest + Supertest
+- ML Service: pytest
+- Integration & Manual Testing
 
 
 Author
+
+
 Isuri
+
+
 Final Year Computing Project
+
+
 PUSL3190 - Computing Project
 
 License
+
+
 This project is developed as part of the final year undergraduate project.
