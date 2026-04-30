@@ -116,8 +116,6 @@ Isuri
 Final Year Computing Project
 
 
-PUSL3190 - Computing Project
-
 License
 
 
