@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: agriscope-mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+  web-backend:
+    build:
+      context: ./backend/web-backend
+      dockerfile: Dockerfile
+    container_name: agriscope-web-backend
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - MONGO_URI=mongodb+srv://dbUser:80ZorylymIUVO3LY@agriscope.46oyf8z.mongodb.net/?appName=AgriScope
+      - JWT_SECRET=5a0e7bfbdb5103662f158e71ed3c5813d61bf341c63296f26e2ac461f786b364
+    depends_on:
+      - mongodb
+
+  ml-backend:
+    build:
+      context: ./backend/ml-backend
+      dockerfile: Dockerfile
+    container_name: agriscope-ml-backend
+    restart: always
+    ports:
+      - "8000:8000"
+    depends_on:
+      - web-backend
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: agriscope-frontend
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      - web-backend
+      - ml-backend
+
+volumes:
+  mongodb_data:
