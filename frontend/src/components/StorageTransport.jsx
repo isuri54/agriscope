@@ -52,6 +52,8 @@ export default function StorageTransport() {
 
     if (name === 'name') {
       setNameInput(value);
+      setFacilityForm({ ...facilityForm, name: value });
+      setSelectedFacility(null);
 
       // Filter facilities starting with input (case-insensitive)
       const filtered = facilities.filter(f =>
@@ -126,7 +128,7 @@ export default function StorageTransport() {
       setEditingFacilityId(null);
       setTimeout(() => setSuccess(''), 4000);
     } catch (err) {
-      setError('Operation failed');
+      setError(err.response?.data?.message || 'Operation failed');
     } finally {
       setLoading(false);
     }
@@ -178,7 +180,7 @@ export default function StorageTransport() {
       setEditingVehicleId(null);
       setTimeout(() => setSuccess(''), 4000);
     } catch (err) {
-      setError('Operation failed');
+      setError(err.response?.data?.message || 'Operation failed');
     } finally {
       setLoading(false);
     }
@@ -255,6 +257,7 @@ export default function StorageTransport() {
               placeholder="e.g., Warehouse A or start typing to search"
               className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
               autoComplete="off"
+              required
             />
 
             {/* Dropdown - width matches input */}
@@ -282,6 +285,7 @@ export default function StorageTransport() {
             onChange={handleFacilityChange} 
             placeholder="e.g., Colombo" 
             disabled={selectedFacility} 
+            required={!selectedFacility}
           />
 
           <Select 
@@ -291,6 +295,7 @@ export default function StorageTransport() {
             onChange={handleFacilityChange} 
             options={["Dry Storage", "Cold Storage"]} 
             disabled={selectedFacility}
+            required={!selectedFacility}
           />
 
           <Input 
@@ -301,6 +306,7 @@ export default function StorageTransport() {
             onChange={handleFacilityChange} 
             placeholder="Total capacity" 
             disabled={selectedFacility}
+            required={!selectedFacility}
           />
 
           <Input 
@@ -389,10 +395,10 @@ export default function StorageTransport() {
         </h2>
 
         <form onSubmit={handleAddOrUpdateVehicle} className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <Input label="Vehicle ID" name="vehicleId" value={vehicleForm.vehicleId} onChange={handleVehicleChange} placeholder="e.g., Truck-001" />
-          <Input label="District" name="district" value={vehicleForm.district} onChange={handleVehicleChange} placeholder="e.g., Colombo" />
-          <Input label="Capacity (tons)" name="capacity" type="number" value={vehicleForm.capacity} onChange={handleVehicleChange} />
-          <Input label="Route" name="route" value={vehicleForm.route} onChange={handleVehicleChange} placeholder="e.g., Galle to Colombo" />
+          <Input label="Vehicle ID" name="vehicleId" value={vehicleForm.vehicleId} onChange={handleVehicleChange} placeholder="e.g., Truck-001" required />
+          <Input label="District" name="district" value={vehicleForm.district} onChange={handleVehicleChange} placeholder="e.g., Colombo" required />
+          <Input label="Capacity (tons)" name="capacity" type="number" value={vehicleForm.capacity} onChange={handleVehicleChange} required />
+          <Input label="Route" name="route" value={vehicleForm.route} onChange={handleVehicleChange} placeholder="e.g., Galle to Colombo" required />
 
           <div className="md:col-span-2">
             <button
@@ -449,7 +455,7 @@ export default function StorageTransport() {
   );
 }
 
-function Input({ label, name, type = "text", value, onChange, placeholder }) {
+function Input({ label, name, type = "text", value, onChange, placeholder, required = false }) {
   return (
     <div>
       <label className="block text-sm font-medium mb-1">{label}</label>
@@ -459,13 +465,14 @@ function Input({ label, name, type = "text", value, onChange, placeholder }) {
         value={value}
         onChange={onChange}
         placeholder={placeholder}
+        required={required}
         className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
       />
     </div>
   );
 }
 
-function Select({ label, name, value, onChange, options }) {
+function Select({ label, name, value, onChange, options, required = false }) {
   return (
     <div>
       <label className="block text-sm font-medium mb-1">{label}</label>
@@ -473,6 +480,7 @@ function Select({ label, name, value, onChange, options }) {
         name={name}
         value={value}
         onChange={onChange}
+        required={required}
         className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
       >
         {options.map((opt) => (
