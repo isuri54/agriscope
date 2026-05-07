@@ -18,7 +18,7 @@ router.get('/schedules', auth, async (req, res) => {
 // @route   POST /api/harvest/schedules
 // @desc    Add new planting schedule
 router.post('/schedules', auth, async (req, res) => {
-  const { crop, district, plantingDate, harvestDate, area, expectedYield } = req.body;
+  const { crop, district, plantingDate, harvestDate, area, expectedHarvest } = req.body;
 
   try {
     const newSchedule = new PlantingSchedule({
@@ -27,7 +27,7 @@ router.post('/schedules', auth, async (req, res) => {
       plantingDate,
       harvestDate,
       area,
-      expectedYield,
+      expectedHarvest,
       officer: req.officer.id,
     });
 
