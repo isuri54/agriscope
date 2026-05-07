@@ -18,15 +18,39 @@ router.get('/facilities', auth, async (req, res) => {
 // Add new facility
 router.post('/facilities', auth, async (req, res) => {
   const { name, district, type, capacity, allocated } = req.body;
+
+  if (!name || !district || !type || capacity == null) {
+    return res.status(400).json({ message: 'Name, district, type, and capacity are required' });
+  }
+
+  const capacityNum = parseFloat(capacity);
+  if (isNaN(capacityNum) || capacityNum < 0) {
+    return res.status(400).json({ message: 'Capacity must be a non-negative number' });
+  }
+
+  const allocatedNum = parseFloat(allocated) || 0;
+  if (isNaN(allocatedNum) || allocatedNum < 0) {
+    return res.status(400).json({ message: 'Allocated must be a non-negative number' });
+  }
+
   try {
     const facility = new StorageFacility({
-      name, district, type, capacity: Number(capacity), allocated: Number(allocated) || 0,
+      name: name.trim(),
+      district: district.trim(),
+      type,
+      capacity: capacityNum,
+      allocated: allocatedNum,
       officer: req.officer.id,
     });
     await facility.save();
     res.status(201).json(facility);
   } catch (err) {
-    res.status(500).json({ message: 'Server error' });
+    console.error('Add facility error:', err);
+    if (err.name === 'ValidationError') {
+      res.status(400).json({ message: 'Validation error: ' + err.message });
+    } else {
+      res.status(500).json({ message: 'Server error' });
+    }
   }
 });
 
@@ -95,15 +119,35 @@ router.get('/vehicles', auth, async (req, res) => {
 // Add new vehicle
 router.post('/vehicles', auth, async (req, res) => {
   const { vehicleId, district, capacity, route } = req.body;
+
+  if (!vehicleId || !district || !capacity || !route) {
+    return res.status(400).json({ message: 'All fields are required' });
+  }
+
+  const capacityNum = parseFloat(capacity);
+  if (isNaN(capacityNum) || capacityNum < 0) {
+    return res.status(400).json({ message: 'Capacity must be a non-negative number' });
+  }
+
   try {
     const vehicle = new TransportVehicle({
-      vehicleId, district, capacity, route,
+      vehicleId: vehicleId.trim(),
+      district: district.trim(),
+      capacity: capacityNum,
+      route: route.trim(),
       officer: req.officer.id,
     });
     await vehicle.save();
     res.status(201).json(vehicle);
   } catch (err) {
-    res.status(500).json({ message: 'Server error' });
+    console.error('Add vehicle error:', err);
+    if (err.name === 'ValidationError') {
+      res.status(400).json({ message: 'Validation error: ' + err.message });
+    } else if (err.code === 11000) {
+      res.status(400).json({ message: 'Vehicle ID already exists' });
+    } else {
+      res.status(500).json({ message: 'Server error' });
+    }
   }
 });
 
