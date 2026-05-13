@@ -65,21 +65,35 @@ router.put('/facilities/:id', auth, async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
-    if (name !== undefined) facility.name = name;
-    if (district !== undefined) facility.district = district;
+    // Full update fields
+    if (name !== undefined) facility.name = name.trim();
+    if (district !== undefined) facility.district = district.trim();
     if (type !== undefined) facility.type = type;
     if (capacity !== undefined) facility.capacity = Number(capacity);
 
+    // Handle allocated field carefully
     if (allocated !== undefined) {
-      // ADD the new allocated value to the existing one
-      const newAllocated = facility.allocated + (Number(allocated) || 0);
+      const newAllocatedValue = Number(allocated);
 
-      // Prevent going over capacity
-      if (newAllocated > facility.capacity) {
-        return res.status(400).json({ message: 'Allocated amount would exceed capacity' });
+      if (isNaN(newAllocatedValue) || newAllocatedValue < 0) {
+        return res.status(400).json({ message: 'Allocated must be a valid non-negative number' });
       }
 
-      facility.allocated = newAllocated;
+      // Check if this is incremental allocation or full edit
+      if (req.body.isIncremental === true) {
+        // Incremental mode (when user selects existing facility via search)
+        const total = facility.allocated + newAllocatedValue;
+        if (total > facility.capacity) {
+          return res.status(400).json({ message: 'Allocated amount would exceed capacity' });
+        }
+        facility.allocated = total;
+      } else {
+        // Full edit mode - replace the allocated value
+        if (newAllocatedValue > facility.capacity) {
+          return res.status(400).json({ message: 'Allocated amount would exceed capacity' });
+        }
+        facility.allocated = newAllocatedValue;
+      }
     }
 
     await facility.save();
