@@ -11,7 +11,17 @@ import { format } from 'date-fns';
 router.post('/generate', auth, async (req, res) => {
   try {
     const officer = req.officer;
-    const { predictedExcess = null } = req.body;
+    let { predictedExcess } = req.body;
+
+    console.log("Received predictedExcess from frontend:", predictedExcess);
+
+    // Clean the value
+    if (predictedExcess !== null && predictedExcess !== undefined) {
+      const num = parseFloat(predictedExcess);
+      predictedExcess = !isNaN(num) ? num.toFixed(2) + " tons" : "No valid prediction";
+    } else {
+      predictedExcess = "No recent prediction available";
+    }
 
     // Fetch real loss data for this officer
     const lossReports = await LossReport.find({ officer: officer.id });
@@ -42,29 +52,29 @@ router.post('/generate', auth, async (req, res) => {
 
     // Average Monthly Production: Group by harvest month and crop
     const monthlyProduction = plantingSchedules.reduce((acc, s) => {
+      if (!s.harvestDate) return acc;
       const harvestMonth = format(new Date(s.harvestDate), 'MMMM');
-      const key = `${s.crop} - ${harvestMonth}`;
-      acc[key] = (acc[key] || 0) + s.expectedYield * s.area;
+      const key = `${s.crop || 'Unknown Crop'} - ${harvestMonth}`;
+      acc[key] = (acc[key] || 0) + (s.expectedHarvest || 0);
       return acc;
     }, {});
 
     // Format as list
-    const productionSummary = Object.entries(monthlyProduction).map(([key, value]) => {
-      const [crop, month] = key.split(' - ');
-      return `${crop} - ${value} tons - expected in ${month}`;
-    }).join(', ') || 'No production data available';
+    const productionSummary = Object.entries(monthlyProduction)
+      .map(([key, value]) => `${key}: ${value.toLocaleString()} tons`)
+      .join('\n') || 'No production data available';
 
-    // Year-over-Year Growth: Total expectedYield for current vs previous year
+    // Year-over-Year Growth: Total expectedHarvest for current vs previous year
     const currentYear = new Date().getFullYear();
     const prevYear = currentYear - 1;
 
     const currentTotal = plantingSchedules
       .filter(s => new Date(s.harvestDate).getFullYear() === currentYear)
-      .reduce((sum, s) => sum + (s.expectedYield * s.area), 0);
+      .reduce((sum, s) => sum + (s.expectedHarvest || 0), 0);
 
     const prevTotal = plantingSchedules
       .filter(s => new Date(s.harvestDate).getFullYear() === prevYear)
-      .reduce((sum, s) => sum + (s.expectedYield * s.area), 0);
+      .reduce((sum, s) => sum + (s.expectedHarvest || 0), 0);
 
     const growth = prevTotal > 0 ? Math.round(((currentTotal - prevTotal) / prevTotal) * 100) : 0;
     const growthText = growth > 0 ? `+${growth}%` : `${growth}%`;
@@ -72,12 +82,12 @@ router.post('/generate', auth, async (req, res) => {
     // Create PDF
     const doc = new PDFDocument({ margin: 50, size: 'A4' });
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename="Agriscope_Report.pdf"');
+    res.setHeader('Content-Disposition', 'attachment; filename="AgriScope_Report.pdf"');
 
     doc.pipe(res);
 
     // Header
-    doc.fontSize(20).font('Helvetica-Bold').text('Agriscope Report', { align: 'center' });
+    doc.fontSize(20).font('Helvetica-Bold').text('AgriScope Report', { align: 'center' });
     doc.fontSize(12).text(`Generated for: ${officer.fullName || officer.username}`, { align: 'center' });
     doc.text(`Date: ${new Date().toLocaleDateString()}`, { align: 'center' });
     doc.moveDown(2);
@@ -94,10 +104,11 @@ router.post('/generate', auth, async (req, res) => {
     // Production Overview (static placeholder – add real data later if needed)
     doc.fontSize(14).font('Helvetica-Bold').text('Production Overview');
     doc.fontSize(11).moveDown(0.5);
-    doc.text(`• Average Monthly Production: ${productionSummary}`);
-    doc.text(`• Year-over-Year Growth: ${growthText}`);
-    doc.text(`• Latest Forecasted Excess: ${predictedExcess ? predictedExcess + ' tons' : 'No recent prediction available'}`);
-    doc.text('• Peak Production Month: June – August ');
+    doc.text(`Year-over-Year Growth: ${growthText}`);
+    doc.text(`Latest Forecasted Excess Harvest: ${predictedExcess}`);
+    doc.moveDown(0.5);
+    doc.text('Monthly Production Summary:', { underline: true });
+    doc.text(productionSummary || 'No data available', { align: 'left' });
     doc.moveDown(1.5);
 
     // Loss Analysis (uses real calculated values)
