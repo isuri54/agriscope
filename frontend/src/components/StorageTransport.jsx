@@ -94,26 +94,31 @@ export default function StorageTransport() {
 
     try {
       let res;
+
       if (editingFacilityId) {
-        // Full update for editing
+        // === FULL EDIT ===
         res = await axios.put(
           `http://localhost:5000/api/storage/facilities/${editingFacilityId}`,
-          facilityForm,
+          { ...facilityForm, isIncremental: false },   // ← Important flag
           { headers: { Authorization: `Bearer ${token}` } }
         );
+
         setFacilities(facilities.map(f => f._id === editingFacilityId ? res.data : f));
         setSuccess('Facility updated successfully!');
+
       } else if (selectedFacility) {
-        // Incremental allocation update
+        // === INCREMENTAL ALLOCATION ===
         res = await axios.put(
           `http://localhost:5000/api/storage/facilities/${selectedFacility._id}`,
-          { allocated: Number(facilityForm.allocated) || 0 },
+          { allocated: Number(facilityForm.allocated) || 0, isIncremental: true },  // ← Important flag
           { headers: { Authorization: `Bearer ${token}` } }
         );
+
         setFacilities(facilities.map(f => f._id === selectedFacility._id ? res.data : f));
         setSuccess(`Allocated updated for ${selectedFacility.name}!`);
+
       } else {
-        // Add new facility
+        // === ADD NEW FACILITY ===
         res = await axios.post('http://localhost:5000/api/storage/facilities', facilityForm, {
           headers: { Authorization: `Bearer ${token}` } 
         });
@@ -127,7 +132,9 @@ export default function StorageTransport() {
       setNameInput('');
       setEditingFacilityId(null);
       setTimeout(() => setSuccess(''), 4000);
+
     } catch (err) {
+      console.error(err.response?.data || err);
       setError(err.response?.data?.message || 'Operation failed');
     } finally {
       setLoading(false);

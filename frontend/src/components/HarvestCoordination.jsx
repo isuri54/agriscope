@@ -6,7 +6,7 @@ import axios from 'axios';
 export default function HarvestCoordination() {
   const [schedules, setSchedules] = useState([]);
   const [formData, setFormData] = useState({
-    crop: '', district: '', plantingDate: '', harvestDate: '', area: '', expectedYield: ''
+    crop: '', district: '', plantingDate: '', harvestDate: '', area: '', expectedHarvest: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');

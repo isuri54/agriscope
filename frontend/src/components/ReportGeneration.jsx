@@ -18,7 +18,16 @@ export default function ReportGeneration() {
       return;
     }
 
-    const latestExcess = localStorage.getItem('latestPredictedExcess') || null;
+    // Get latest prediction
+    let latestExcess = localStorage.getItem('latestPredictedExcess');
+    
+    // Convert to clean number or null
+    if (latestExcess) {
+      latestExcess = parseFloat(latestExcess);
+      if (isNaN(latestExcess)) latestExcess = null;
+    }
+
+    console.log("Sending to report → predictedExcess:", latestExcess); // Debug
 
     try {
       const response = await axios.post(
@@ -33,20 +42,15 @@ export default function ReportGeneration() {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", "Agriscope_Report.pdf");
+      link.setAttribute("download", `AgriScope_Report_${new Date().toISOString().slice(0,10)}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
 
     } catch (err) {
-      console.error("=== REPORT ERROR ===");
-      console.error("Status:", err.response?.status);
-      console.error("Error Data:", err.response?.data);
-      console.error("Full Error:", err);
-
-      const errorMessage = err.response?.data?.message || err.message || "Failed to generate report";
-      setError(errorMessage);
+      console.error("Report Error:", err.response?.data || err);
+      setError(err.response?.data?.message || "Failed to generate report");
     } finally {
       setLoading(false);
     }
