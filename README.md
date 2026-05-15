@@ -47,6 +47,16 @@ The system combines:
 - Jest + Supertest (Backend Testing)
 - Pytest (ML Service Testing)
 
+## Screenshots
+
+<img width="1919" height="1079" alt="Screenshot 2026-04-29 120539" src="https://github.com/user-attachments/assets/646207e3-4bd6-4f7d-9de5-7ba77320220e" />
+<img width="1919" height="1079" alt="Screenshot 2026-04-29 120712" src="https://github.com/user-attachments/assets/e8198a3d-91f4-4b7a-bd5e-254b826aecc7" />
+<img width="1919" height="1079" alt="Screenshot 2026-04-29 120311" src="https://github.com/user-attachments/assets/03eabe30-0a96-4a39-a597-8b78b9f8421f" />
+<img width="1919" height="1079" alt="Screenshot 2026-04-29 120333" src="https://github.com/user-attachments/assets/68daf549-2f1f-42ae-a076-55056949535d" />
+<img width="1919" height="1079" alt="Screenshot 2026-04-29 120356" src="https://github.com/user-attachments/assets/52278e81-3839-4d87-8a42-d6827177ab3c" />
+<img width="1919" height="1079" alt="Screenshot 2026-04-29 120420" src="https://github.com/user-attachments/assets/8b910903-c483-4255-bb57-41993fd39b03" />
+<img width="1919" height="1079" alt="Screenshot 2026-04-29 120452" src="https://github.com/user-attachments/assets/32819bdb-6daa-4884-80d9-1fddec1db7ae" />
+<img width="1919" height="1079" alt="Screenshot 2026-04-29 120511" src="https://github.com/user-attachments/assets/5a29321a-a2db-4ce3-9625-49c8b97b0100" />
 
 ## Quick Start (For Demonstration)
 
